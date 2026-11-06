@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  core:
+    # The classifier is pure Python: check every version from Xcode's (3.9) up.
+    name: Unit tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.9", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m unittest discover -s tests/unit -v
+
+  macos:
+    name: Unit + integration tests (macOS, Xcode's lldb)
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          xcrun lldb --version
+          swift --version
+          /usr/bin/python3 --version
+      - name: Allow debugging
+        run: |
+          sudo DevToolsSecurity -enable
+          sudo dscl . -append /Groups/_developer GroupMembership "$USER"
+      - name: Unit tests with the system Python
+        run: /usr/bin/python3 -m unittest discover -s tests/unit -v
+      - name: Build the demo
+        run: swift build --package-path demo
+      - name: Integration tests
+        env:
+          WHY_DEMO: demo/.build/debug/why-demo
+        run: |
+          export LLDB="$(xcrun --find lldb)"
+          export WHY_DEMO="$PWD/$WHY_DEMO"
+          /usr/bin/python3 -m unittest discover -s tests/integration -v
