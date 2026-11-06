@@ -277,13 +277,16 @@ def analyze_stack(ctx, top=10):
 
 
 def _pattern(report):
-    if report.cycle_reps >= INFINITE_REPS:
+    percent = report.percent
+    # At an ordinary stop with plenty of stack left, big frames or a long cycle
+    # are worth listing but not worth a scary label.
+    filling = percent is None or percent >= 50
+    if report.cycle_reps >= INFINITE_REPS and filling:
         return "infinite-recursion"
-    if report.used and report.large_bytes * 2 >= report.used:
+    if report.used and report.large_bytes * 2 >= report.used and filling:
         return "large-frames"
     if report.cycle_reps >= RECURSION_REPS:
         return "recursion"
-    percent = report.percent
     if percent is not None and percent >= 90:
         return "deep-chain"
     return "normal"

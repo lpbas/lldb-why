@@ -56,7 +56,7 @@ class RenderTests(unittest.TestCase):
         self.assertIn("Used      7.96 MB of 7.98 MB (99.7%) across 76 frames", out)
         self.assertIn("requested 15.0 KB (15312 bytes; caller's prologue, matches x9)", out)
         self.assertIn("Largest frames", out)
-        self.assertIn("x73", out)
+        self.assertIn("    73 calls  deepChain(_:_:)", out)
         self.assertIn("Frames: 74 yours (7.96 MB), 0 SwiftUI (0 B), 2 system (0 B)", out)
 
     def test_verdict_for_bad_access_is_one_line(self):

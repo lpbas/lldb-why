@@ -82,7 +82,8 @@ class StackReportTests(unittest.TestCase):
             frames.append(frame(i, "isEven(_:)" if i % 2 == 0 else "isOdd(_:)", "demo", sp=sp))
             sp += 64
         frames.append(frame(600, "main", "demo", sp=sp))
-        r = analyze_stack(bad_access(frames, 0x16F603FF0, code=2))
+        small = Region(base=0x16F604000, end=0x16F604000 + 40 * 1024, readable=True, writable=True, mapped=True)
+        r = analyze_stack(bad_access(frames, 0x16F603FF0, code=2, stack_region=small))
         self.assertEqual(r.pattern, "infinite-recursion")
         self.assertEqual(sorted(r.cycle), ["isEven(_:)", "isOdd(_:)"])
         self.assertEqual(r.cycle_frame_size, 128)
@@ -94,6 +95,13 @@ class StackReportTests(unittest.TestCase):
         r = analyze_stack(bad_access(stack(*specs), 0x16F603FF0, code=2))
         self.assertEqual(r.cycle_reps, 0)
         self.assertEqual(r.counts["swiftui"], 200)
+
+    def test_big_frames_at_a_normal_stop_are_not_flagged(self):
+        # 113 KB frames, but only 1.5% of an 8 MB stack used (a breakpoint in the enum demo)
+        frames = [frame(0, "deepChain(_:_:)", "demo", sp=0x16FDDE000), frame(1, "main", "demo", sp=0x16FDFA000),
+                  frame(2, "start", "dyld", sp=0x16FDFDAA0)]
+        ctx = CrashContext(stop=StopInfo(reason="breakpoint"), frames=frames, total_frames=3, stack_region=MAIN_STACK)
+        self.assertEqual(analyze_stack(ctx).pattern, "normal")
 
     def test_truncated_walk_uses_region_end(self):
         ctx = CrashContext(stop=StopInfo(reason="breakpoint"), frames=stack(("a", "demo"), ("b", "demo")),

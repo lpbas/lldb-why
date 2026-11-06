@@ -74,7 +74,7 @@ def _overflow_verdict(f, v):
     if s.pattern == "large-frames" and top:
         per_call = top.size // max(1, top.count)
         if top.count > 1:
-            return "Stack overflow: deep chain of large frames (%s uses %s per call, x%d)" % (
+            return "Stack overflow: deep chain of large frames (%s uses %s per call, %d calls deep)" % (
                 top.name, fmt_size(per_call), top.count)
         return "Stack overflow: deep chain of large frames (%s alone uses %s)" % (top.name, fmt_size(top.size))
     if s.pattern == "recursion":
@@ -121,7 +121,7 @@ def _overflow_pattern(f, v):
         return "%s repeats %d times, %s per repetition" % (" -> ".join(s.cycle), s.cycle_reps, fmt_size(s.cycle_frame_size))
     top = _top_function(s)
     if top:
-        return "Biggest consumer: %s x%d = %s (%s per call)" % (
+        return "Biggest consumer: %s, %d calls = %s (%s per call)" % (
             top.name, top.count, fmt_size(top.size), fmt_size(top.size // max(1, top.count)))
     return None
 
@@ -604,6 +604,16 @@ RULES = [
 
     # ---- EXC_BREAKPOINT / EXC_BAD_INSTRUCTION / Swift runtime reporting ------------------------
     Rule(
+        id="sanitizer-report",
+        category="trap",
+        when=lambda f: bool(f.stop.instrumentation) and f.stop.instrumentation != "SwiftRuntimeReporting",
+        verdict="{instrumentation} report: {message}",
+        confidence="high",
+        vars=lambda f: {"instrumentation": f.stop.instrumentation},
+        notes=["The sanitizer's report in the console has the full details, including allocation and free stacks"],
+        next_steps=["Run `memory history <address>` for an address from the report", _inspect_step],
+    ),
+    Rule(
         id="actor-isolation",
         category="trap",
         when=lambda f: f.top_match(8, ISOLATION_CHECKS),
@@ -612,7 +622,7 @@ RULES = [
         vars=lambda f: {
             "caller": F.frame_label(_caller_below(f)) if _caller_below(f) else "an unknown caller",
             # the check closest to the user's code is the one it called on entry
-            "check": [fr for fr in f.frames[:8] if F.matches_any(fr, ISOLATION_CHECKS)][-1].name,
+            "check": [fr for fr in f.frames[:8] if F.matches_any(fr, ISOLATION_CHECKS)][-1].name.split("(")[0],
         },
         evidence=["The Swift runtime checked the executor on entry ({check}) and it wasn't the expected one",
                   "It was invoked by {caller}"],

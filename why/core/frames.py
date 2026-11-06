@@ -102,7 +102,7 @@ def frame_label(frame):
         return "(no frame)"
     name = frame.name or ("0x%x" % frame.pc)
     text = "#%d %s" % (frame.index, name)
-    if frame.file:
+    if frame.file and not frame.file.startswith("<"):   # skip "<compiler-generated>"
         text += " at %s" % os.path.basename(frame.file)
         if frame.line:
             text += ":%d" % frame.line

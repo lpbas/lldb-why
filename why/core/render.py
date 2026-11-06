@@ -59,8 +59,15 @@ def stack_summary(r, top=3):
     """A few lines for the crash verdict; `why stack` prints the full report."""
     out = []
     if r.largest:
-        out.append("Largest frames: " + ", ".join(
-            "%s %s" % (fmt_size(fs.size), fs.frame.name or "0x%x" % fs.frame.pc) for fs in r.largest[:top]))
+        seen, parts = set(), []
+        for fs in r.largest:
+            name = fs.frame.name or "0x%x" % fs.frame.pc
+            if name not in seen:
+                seen.add(name)
+                parts.append("%s %s" % (fmt_size(fs.size), name))
+            if len(parts) == top:
+                break
+        out.append("Largest frames: " + ", ".join(parts))
     c, b = r.counts, r.category_bytes
 
     def part(key, label):
@@ -113,7 +120,7 @@ def render_stack(r, color=False):
         for fs in r.largest:
             f = fs.frame
             where = ""
-            if f.file:
+            if f.file and not f.file.startswith("<"):
                 where = "  %s%s" % (os.path.basename(f.file), ":%d" % f.line if f.line else "")
             elif f.module:
                 where = "  (%s)" % f.module
@@ -123,7 +130,8 @@ def render_stack(r, color=False):
         lines.append(s("  By function", _BOLD))
         width = max(len(fmt_size(t.size)) for t in r.by_function)
         for t in r.by_function:
-            lines.append("    %s  x%-5d %s" % (fmt_size(t.size).rjust(width), t.count, t.name))
+            lines.append("    %s  %6d %s  %s" % (fmt_size(t.size).rjust(width), t.count,
+                                                "call " if t.count == 1 else "calls", t.name))
     lines.append("")
     lines.append("  " + stack_summary(r)[-1])
     return "\n".join(lines) + "\n"
