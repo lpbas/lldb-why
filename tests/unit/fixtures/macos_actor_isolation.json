@@ -1,0 +1,206 @@
+{
+ "description": "Captured from `why-demo actor-isolation` on macOS 26.6.2 (arm64).",
+ "expect": {
+  "rule_id": "actor-isolation",
+  "confidence": "high",
+  "verdict_contains": [
+   "ScoreViewModel.startRefreshing() is isolated to the main actor"
+  ],
+  "user_frame": "closure #1 in ScoreViewModel.startRefreshing()"
+ },
+ "context": {
+  "stop": {
+   "reason": "instrumentation",
+   "description": "warning: data race detected: @MainActor function at why_demo/main.swift:165 was not called on the main thread",
+   "exc_type": null,
+   "exc_code": null,
+   "exc_subcode": null,
+   "signal": null,
+   "fault_address": null,
+   "instrumentation": "SwiftRuntimeReporting",
+   "instrumentation_message": "warning: data race detected: @MainActor function at why_demo/main.swift:165 was not called on the main thread",
+   "is_fatal": false
+  },
+  "thread": {
+   "index": 2,
+   "name": "",
+   "queue": "com.apple.root.default-qos",
+   "is_main": false
+  },
+  "frames": [
+   {
+    "index": 0,
+    "pc": "0x193de4ec0",
+    "sp": "0x16fe86ce0",
+    "function": "_swift_runtime_on_report",
+    "display": "_swift_runtime_on_report",
+    "module": "libswiftCore.dylib",
+    "module_path": "/usr/lib/swift/libswiftCore.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 1,
+    "pc": "0x285d8a4cc",
+    "sp": "0x16fe86ce0",
+    "function": "swift_task_reportUnexpectedExecutor",
+    "display": "swift_task_reportUnexpectedExecutor",
+    "module": "libswift_Concurrency.dylib",
+    "module_path": "/usr/lib/swift/libswift_Concurrency.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 2,
+    "pc": "0x100007b0c",
+    "sp": "0x16fe86db0",
+    "function": "closure #1 () -> () in why_demo.ScoreViewModel.startRefreshing() -> ()",
+    "display": "closure #1 in ScoreViewModel.startRefreshing()",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 0
+   },
+   {
+    "index": 3,
+    "pc": "0x100007ba8",
+    "sp": "0x16fe86e20",
+    "function": "reabstraction thunk helper from @escaping @callee_guaranteed () -> () to @escaping @callee_unowned @convention(block) () -> ()",
+    "display": "thunk for @escaping @callee_guaranteed () -> ()",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/<compiler-generated>",
+    "line": 0
+   },
+   {
+    "index": 4,
+    "pc": "0x1804bba28",
+    "sp": "0x16fe86e50",
+    "function": "_dispatch_call_block_and_release",
+    "display": "_dispatch_call_block_and_release",
+    "module": "libdispatch.dylib",
+    "module_path": "/usr/lib/system/libdispatch.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 5,
+    "pc": "0x1804d54b0",
+    "sp": "0x16fe86e70",
+    "function": "_dispatch_client_callout",
+    "display": "_dispatch_client_callout",
+    "module": "libdispatch.dylib",
+    "module_path": "/usr/lib/system/libdispatch.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 6,
+    "pc": "0x1804f2044",
+    "sp": "0x16fe86e80",
+    "function": "_dispatch_queue_override_invoke.cold.3",
+    "display": "_dispatch_queue_override_invoke.cold.3",
+    "module": "libdispatch.dylib",
+    "module_path": "/usr/lib/system/libdispatch.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 7,
+    "pc": "0x1804bfe60",
+    "sp": "0x16fe86eb0",
+    "function": "_dispatch_queue_override_invoke",
+    "display": "_dispatch_queue_override_invoke",
+    "module": "libdispatch.dylib",
+    "module_path": "/usr/lib/system/libdispatch.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 8,
+    "pc": "0x1804cd980",
+    "sp": "0x16fe86f10",
+    "function": "_dispatch_root_queue_drain",
+    "display": "_dispatch_root_queue_drain",
+    "module": "libdispatch.dylib",
+    "module_path": "/usr/lib/system/libdispatch.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 9,
+    "pc": "0x1804ce120",
+    "sp": "0x16fe86f90",
+    "function": "_dispatch_worker_thread2",
+    "display": "_dispatch_worker_thread2",
+    "module": "libdispatch.dylib",
+    "module_path": "/usr/lib/system/libdispatch.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 10,
+    "pc": "0x180673e84",
+    "sp": "0x16fe86fc0",
+    "function": "_pthread_wqthread",
+    "display": "_pthread_wqthread",
+    "module": "libsystem_pthread.dylib",
+    "module_path": "/usr/lib/system/libsystem_pthread.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   }
+  ],
+  "total_frames": 11,
+  "arch": "arm64",
+  "platform": "macos",
+  "address_mask": "0xffff800000000000",
+  "pagezero_end": "0x100000000",
+  "registers": {
+   "x9": "0x0",
+   "x15": "0x285e0217f",
+   "x16": "0x193e2f3a8",
+   "x17": "0x29a77a128",
+   "fp": "0x16fe86da0",
+   "lr": "0x285d8a4cc",
+   "sp": "0x16fe86ce0",
+   "pc": "0x193de4ec0"
+  },
+  "fault_region": null,
+  "pc_region": {
+   "base": "0x193de4000",
+   "end": "0x193de8000",
+   "readable": true,
+   "writable": false,
+   "executable": true,
+   "mapped": true,
+   "type": "",
+   "image": "libswiftCore.dylib",
+   "section": "__TEXT.__text"
+  },
+  "stack_region": {
+   "base": "0x16fe04000",
+   "end": "0x16fe8c000",
+   "readable": true,
+   "writable": true,
+   "executable": false,
+   "mapped": true,
+   "type": "stack",
+   "image": "",
+   "section": ""
+  },
+  "exception": null,
+  "caller_prologue": [],
+  "main_executable": "/src/lldb-why/demo/.build/debug/why-demo"
+ }
+}

@@ -1,0 +1,205 @@
+{
+ "description": "Captured from `why-demo index-out-of-range` on macOS 26.6.2 (arm64).",
+ "expect": {
+  "rule_id": "swift-runtime-failure",
+  "confidence": "high",
+  "verdict_contains": [
+   "Index out of range"
+  ]
+ },
+ "context": {
+  "stop": {
+   "reason": "instrumentation",
+   "description": "Fatal error: Index out of range",
+   "exc_type": null,
+   "exc_code": null,
+   "exc_subcode": null,
+   "signal": null,
+   "fault_address": null,
+   "instrumentation": "SwiftRuntimeReporting",
+   "instrumentation_message": "Fatal error: Index out of range",
+   "is_fatal": true
+  },
+  "thread": {
+   "index": 1,
+   "name": "",
+   "queue": "com.apple.main-thread",
+   "is_main": true
+  },
+  "frames": [
+   {
+    "index": 0,
+    "pc": "0x193de4ec0",
+    "sp": "0x16fdfce50",
+    "function": "_swift_runtime_on_report",
+    "display": "_swift_runtime_on_report",
+    "module": "libswiftCore.dylib",
+    "module_path": "/usr/lib/swift/libswiftCore.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 1,
+    "pc": "0x193eff850",
+    "sp": "0x16fdfce50",
+    "function": "_swift_stdlib_reportFatalErrorInFile",
+    "display": "_swift_stdlib_reportFatalErrorInFile",
+    "module": "libswiftCore.dylib",
+    "module_path": "/usr/lib/swift/libswiftCore.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 2,
+    "pc": "0x193f29510",
+    "sp": "0x16fdfcee0",
+    "function": "closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in closure #1 (Swift.UnsafeBufferPointer<Swift.UInt8>) -> () in Swift._assertionFailure(_: Swift.StaticString, _: Swift.StaticString, file: Swift.StaticString, line: Swift.UInt, flags: Swift.UInt32) -> Swift.Never",
+    "display": "closure #1 in closure #1 in _assertionFailure(_:_:file:line:flags:)",
+    "module": "libswiftCore.dylib",
+    "module_path": "/usr/lib/swift/libswiftCore.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 3,
+    "pc": "0x193f28fe4",
+    "sp": "0x16fdfcf70",
+    "function": "Swift._assertionFailure(_: Swift.StaticString, _: Swift.StaticString, file: Swift.StaticString, line: Swift.UInt, flags: Swift.UInt32) -> Swift.Never",
+    "display": "_assertionFailure(_:_:file:line:flags:)",
+    "module": "libswiftCore.dylib",
+    "module_path": "/usr/lib/swift/libswiftCore.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 4,
+    "pc": "0x193dd647c",
+    "sp": "0x16fdfd010",
+    "function": "Swift.Array._checkSubscript(_: Swift.Int, wasNativeTypeChecked: Swift.Bool) -> Swift._DependenceToken",
+    "display": "Array._checkSubscript(_:wasNativeTypeChecked:)",
+    "module": "libswiftCore.dylib",
+    "module_path": "/usr/lib/swift/libswiftCore.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 5,
+    "pc": "0x193dfd964",
+    "sp": "0x16fdfd050",
+    "function": "Swift.Array.subscript.getter : (Swift.Int) -> \u03c4_0_0",
+    "display": "Array.subscript.getter",
+    "module": "libswiftCore.dylib",
+    "module_path": "/usr/lib/swift/libswiftCore.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 6,
+    "pc": "0x1000032f0",
+    "sp": "0x16fdfd0b0",
+    "function": "why_demo.indexOutOfRange() -> ()",
+    "display": "indexOutOfRange()",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 145
+   },
+   {
+    "index": 7,
+    "pc": "0x1000028f4",
+    "sp": "0x16fdfd120",
+    "function": "reabstraction thunk helper from @escaping @callee_guaranteed () -> () to @escaping @callee_guaranteed () -> (@out ())",
+    "display": "thunk for @escaping @callee_guaranteed () -> ()",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/<compiler-generated>",
+    "line": 0
+   },
+   {
+    "index": 8,
+    "pc": "0x100004228",
+    "sp": "0x16fdfd140",
+    "function": "reabstraction thunk helper from @escaping @callee_guaranteed () -> (@out ()) to @escaping @callee_guaranteed () -> ()",
+    "display": "thunk for @escaping @callee_guaranteed () -> (@out ())",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/<compiler-generated>",
+    "line": 0
+   },
+   {
+    "index": 9,
+    "pc": "0x100001f48",
+    "sp": "0x16fdfd160",
+    "function": "main",
+    "display": "main",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 210
+   },
+   {
+    "index": 10,
+    "pc": "0x1802ac4e4",
+    "sp": "0x16fdfda00",
+    "function": "start",
+    "display": "start",
+    "module": "dyld",
+    "module_path": "/usr/lib/dyld",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   }
+  ],
+  "total_frames": 11,
+  "arch": "arm64",
+  "platform": "macos",
+  "address_mask": "0xffff800000000000",
+  "pagezero_end": "0x100000000",
+  "registers": {
+   "x9": "0xd04bea1e23c10054",
+   "x15": "0xafd00c000",
+   "x16": "0x18046a6b8",
+   "x17": "0x1ee6f8e98",
+   "fp": "0x16fdfced0",
+   "lr": "0x193eff850",
+   "sp": "0x16fdfce50",
+   "pc": "0x193de4ec0"
+  },
+  "fault_region": null,
+  "pc_region": {
+   "base": "0x193de4000",
+   "end": "0x193de8000",
+   "readable": true,
+   "writable": false,
+   "executable": true,
+   "mapped": true,
+   "type": "",
+   "image": "libswiftCore.dylib",
+   "section": "__TEXT.__text"
+  },
+  "stack_region": {
+   "base": "0x16f604000",
+   "end": "0x16fe00000",
+   "readable": true,
+   "writable": true,
+   "executable": false,
+   "mapped": true,
+   "type": "stack",
+   "image": "",
+   "section": ""
+  },
+  "exception": null,
+  "caller_prologue": [],
+  "main_executable": "/src/lldb-why/demo/.build/debug/why-demo"
+ }
+}

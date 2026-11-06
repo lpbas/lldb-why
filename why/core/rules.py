@@ -456,8 +456,15 @@ def _abort_verdict(f, v):
     return "The program aborted (SIGABRT)"
 
 
+def _in_malloc(f, n=3):
+    """A trap or abort raised from inside libsystem_malloc itself (e.g. mfm_free.cold.4 on macOS 26)."""
+    return any(fr.module == "libsystem_malloc.dylib" for fr in f.frames[:n])
+
+
 def _malloc_verdict(f, v):
-    if f.top_match(12, [r"POINTER_BEING_FREED_WAS_NOT_ALLOCATED"]):
+    freeing = f.top_match(12, [r"POINTER_BEING_FREED_WAS_NOT_ALLOCATED"]) or any(
+        fr.module == "libsystem_malloc.dylib" and re.search(r"free", fr.name) for fr in f.frames[:3])
+    if freeing:
         return "Freed a pointer that malloc doesn't own: a double free, or free() of a stack, interior or garbage pointer"
     return "Heap corruption detected by malloc"
 
@@ -499,7 +506,8 @@ RULES = [
     Rule(
         id="malloc-error",
         category="any",
-        when=lambda f: f.category in ("abort", "trap", "bad_access") and f.top_match(12, MALLOC_ERRORS),
+        when=lambda f: ((f.category in ("abort", "trap", "bad_access") and f.top_match(12, MALLOC_ERRORS))
+                        or (f.category in ("abort", "trap") and _in_malloc(f))),
         verdict=_malloc_verdict,
         confidence="high",
         notes=["The console usually shows a line like 'malloc: *** error for object 0x...: pointer being freed was not allocated'"],

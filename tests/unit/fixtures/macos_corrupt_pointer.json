@@ -1,0 +1,143 @@
+{
+ "description": "Captured from `why-demo corrupt-pointer` on macOS 26.6.2 (arm64).",
+ "expect": {
+  "rule_id": "non-canonical",
+  "confidence": "medium",
+  "verdict_contains": [
+   "0x4141414141414148"
+  ]
+ },
+ "context": {
+  "stop": {
+   "reason": "exception",
+   "description": "EXC_BAD_ACCESS (code=1, address=0x4141414141414148)",
+   "exc_type": 1,
+   "exc_code": "0x1",
+   "exc_subcode": "0x4141414141414148",
+   "signal": null,
+   "fault_address": "0x4141414141414148",
+   "instrumentation": "",
+   "instrumentation_message": "",
+   "is_fatal": false
+  },
+  "thread": {
+   "index": 1,
+   "name": "",
+   "queue": "com.apple.main-thread",
+   "is_main": true
+  },
+  "frames": [
+   {
+    "index": 0,
+    "pc": "0x100003c68",
+    "sp": "0x16fdfd090",
+    "function": "why_demo.corruptPointer() -> ()",
+    "display": "corruptPointer()",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 125
+   },
+   {
+    "index": 1,
+    "pc": "0x1000028f4",
+    "sp": "0x16fdfd120",
+    "function": "reabstraction thunk helper from @escaping @callee_guaranteed () -> () to @escaping @callee_guaranteed () -> (@out ())",
+    "display": "thunk for @escaping @callee_guaranteed () -> ()",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/<compiler-generated>",
+    "line": 0
+   },
+   {
+    "index": 2,
+    "pc": "0x100004228",
+    "sp": "0x16fdfd140",
+    "function": "reabstraction thunk helper from @escaping @callee_guaranteed () -> (@out ()) to @escaping @callee_guaranteed () -> ()",
+    "display": "thunk for @escaping @callee_guaranteed () -> (@out ())",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/<compiler-generated>",
+    "line": 0
+   },
+   {
+    "index": 3,
+    "pc": "0x100001f48",
+    "sp": "0x16fdfd160",
+    "function": "main",
+    "display": "main",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 210
+   },
+   {
+    "index": 4,
+    "pc": "0x1802ac4e4",
+    "sp": "0x16fdfda00",
+    "function": "start",
+    "display": "start",
+    "module": "dyld",
+    "module_path": "/usr/lib/dyld",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   }
+  ],
+  "total_frames": 5,
+  "arch": "arm64",
+  "platform": "macos",
+  "address_mask": "0xffff800000000000",
+  "pagezero_end": "0x100000000",
+  "registers": {
+   "x9": "0x27",
+   "x15": "0x100003d10",
+   "x16": "0x1efec12d0",
+   "x17": "0x1efec12d0",
+   "fp": "0x16fdfd110",
+   "lr": "0x100003c60",
+   "sp": "0x16fdfd090",
+   "pc": "0x100003c68"
+  },
+  "fault_region": {
+   "base": "0x414141414148",
+   "end": "0xffffffffffffffff",
+   "readable": false,
+   "writable": false,
+   "executable": false,
+   "mapped": false,
+   "type": "",
+   "image": "",
+   "section": ""
+  },
+  "pc_region": {
+   "base": "0x100000000",
+   "end": "0x100070000",
+   "readable": true,
+   "writable": false,
+   "executable": true,
+   "mapped": true,
+   "type": "",
+   "image": "why-demo",
+   "section": "__TEXT.__text"
+  },
+  "stack_region": {
+   "base": "0x16f604000",
+   "end": "0x16fe00000",
+   "readable": true,
+   "writable": true,
+   "executable": false,
+   "mapped": true,
+   "type": "stack",
+   "image": "",
+   "section": ""
+  },
+  "exception": null,
+  "caller_prologue": [],
+  "main_executable": "/src/lldb-why/demo/.build/debug/why-demo"
+ }
+}

@@ -1,0 +1,368 @@
+{
+ "description": "Captured from `why-demo nsexception` on macOS 26.6.2 (arm64).",
+ "expect": {
+  "rule_id": "objc-exception",
+  "confidence": "high",
+  "verdict_contains": [
+   "NSRangeException"
+  ],
+  "user_frame": "nsException()"
+ },
+ "context": {
+  "stop": {
+   "reason": "signal",
+   "description": "signal SIGABRT",
+   "exc_type": null,
+   "exc_code": null,
+   "exc_subcode": null,
+   "signal": 6,
+   "fault_address": null,
+   "instrumentation": "",
+   "instrumentation_message": "",
+   "is_fatal": false
+  },
+  "thread": {
+   "index": 1,
+   "name": "",
+   "queue": "com.apple.main-thread",
+   "is_main": true
+  },
+  "frames": [
+   {
+    "index": 0,
+    "pc": "0x18063c5e8",
+    "sp": "0x16fdfbed0",
+    "function": "__pthread_kill",
+    "display": "__pthread_kill",
+    "module": "libsystem_kernel.dylib",
+    "module_path": "/usr/lib/system/libsystem_kernel.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 1,
+    "pc": "0x1806778d8",
+    "sp": "0x16fdfbed0",
+    "function": "pthread_kill",
+    "display": "pthread_kill",
+    "module": "libsystem_pthread.dylib",
+    "module_path": "/usr/lib/system/libsystem_pthread.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 2,
+    "pc": "0x18057d978",
+    "sp": "0x16fdfbf00",
+    "function": "abort",
+    "display": "abort",
+    "module": "libsystem_c.dylib",
+    "module_path": "/usr/lib/system/libsystem_c.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 3,
+    "pc": "0x18062e72c",
+    "sp": "0x16fdfbf40",
+    "function": "__abort_message",
+    "display": "__abort_message",
+    "module": "libc++abi.dylib",
+    "module_path": "/usr/lib/libc++abi.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 4,
+    "pc": "0x18061b588",
+    "sp": "0x16fdfbf80",
+    "function": "demangling_terminate_handler()",
+    "display": "demangling_terminate_handler()",
+    "module": "libc++abi.dylib",
+    "module_path": "/usr/lib/libc++abi.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 5,
+    "pc": "0x180228894",
+    "sp": "0x16fdfbfc0",
+    "function": "_objc_terminate()",
+    "display": "_objc_terminate()",
+    "module": "libobjc.A.dylib",
+    "module_path": "/usr/lib/libobjc.A.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 6,
+    "pc": "0x18062b75c",
+    "sp": "0x16fdfbfe0",
+    "function": "std::__terminate(void (*)())",
+    "display": "std::__terminate(void (*)())",
+    "module": "libc++abi.dylib",
+    "module_path": "/usr/lib/libc++abi.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 7,
+    "pc": "0x18062dbe4",
+    "sp": "0x16fdfbff0",
+    "function": "__cxxabiv1::failed_throw(__cxxabiv1::__cxa_exception*)",
+    "display": "__cxxabiv1::failed_throw(__cxxabiv1::__cxa_exception*)",
+    "module": "libc++abi.dylib",
+    "module_path": "/usr/lib/libc++abi.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 8,
+    "pc": "0x18061a09c",
+    "sp": "0x16fdfc010",
+    "function": "__cxa_throw",
+    "display": "__cxa_throw",
+    "module": "libc++abi.dylib",
+    "module_path": "/usr/lib/libc++abi.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 9,
+    "pc": "0x18021ea84",
+    "sp": "0x16fdfc040",
+    "function": "objc_exception_throw",
+    "display": "objc_exception_throw",
+    "module": "libobjc.A.dylib",
+    "module_path": "/usr/lib/libobjc.A.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 10,
+    "pc": "0x1806def7c",
+    "sp": "0x16fdfd050",
+    "function": "-[__NSSingleObjectArrayI objectAtIndex:]",
+    "display": "-[__NSSingleObjectArrayI objectAtIndex:]",
+    "module": "CoreFoundation",
+    "module_path": "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 11,
+    "pc": "0x100003a00",
+    "sp": "0x16fdfd0a0",
+    "function": "why_demo.nsException() -> ()",
+    "display": "nsException()",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 184
+   },
+   {
+    "index": 12,
+    "pc": "0x1000028f4",
+    "sp": "0x16fdfd120",
+    "function": "reabstraction thunk helper from @escaping @callee_guaranteed () -> () to @escaping @callee_guaranteed () -> (@out ())",
+    "display": "thunk for @escaping @callee_guaranteed () -> ()",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/<compiler-generated>",
+    "line": 0
+   },
+   {
+    "index": 13,
+    "pc": "0x100004228",
+    "sp": "0x16fdfd140",
+    "function": "reabstraction thunk helper from @escaping @callee_guaranteed () -> (@out ()) to @escaping @callee_guaranteed () -> ()",
+    "display": "thunk for @escaping @callee_guaranteed () -> (@out ())",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/<compiler-generated>",
+    "line": 0
+   },
+   {
+    "index": 14,
+    "pc": "0x100001f48",
+    "sp": "0x16fdfd160",
+    "function": "main",
+    "display": "main",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 210
+   },
+   {
+    "index": 15,
+    "pc": "0x1802ac4e4",
+    "sp": "0x16fdfda00",
+    "function": "start",
+    "display": "start",
+    "module": "dyld",
+    "module_path": "/usr/lib/dyld",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   }
+  ],
+  "total_frames": 16,
+  "arch": "arm64",
+  "platform": "macos",
+  "address_mask": "0xffff800000000000",
+  "pagezero_end": "0x100000000",
+  "registers": {
+   "x9": "0x5328c6c2a424ffb1",
+   "x15": "0x0",
+   "x16": "0x148",
+   "x17": "0x1ee6f7358",
+   "fp": "0x16fdfbef0",
+   "lr": "0x1806778d8",
+   "sp": "0x16fdfbed0",
+   "pc": "0x18063c5e8"
+  },
+  "fault_region": null,
+  "pc_region": {
+   "base": "0x1802c8000",
+   "end": "0x180670000",
+   "readable": true,
+   "writable": false,
+   "executable": true,
+   "mapped": true,
+   "type": "",
+   "image": "libsystem_kernel.dylib",
+   "section": "__TEXT.__text"
+  },
+  "stack_region": {
+   "base": "0x16f604000",
+   "end": "0x16fe00000",
+   "readable": true,
+   "writable": true,
+   "executable": false,
+   "mapped": true,
+   "type": "stack",
+   "image": "",
+   "section": ""
+  },
+  "exception": {
+   "language": "objc",
+   "name": "NSRangeException",
+   "reason": "*** -[__NSSingleObjectArrayI objectAtIndex:]: index 3 beyond bounds [0 .. 0]",
+   "backtrace": [
+    {
+     "index": 0,
+     "pc": "0x1807a31e4",
+     "sp": "0xffffffffffffffff",
+     "function": "__exceptionPreprocess",
+     "display": "__exceptionPreprocess",
+     "module": "CoreFoundation",
+     "module_path": "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation",
+     "inlined": false,
+     "file": "",
+     "line": 0
+    },
+    {
+     "index": 1,
+     "pc": "0x18021e91c",
+     "sp": "0xffffffffffffffff",
+     "function": "objc_exception_throw",
+     "display": "objc_exception_throw",
+     "module": "libobjc.A.dylib",
+     "module_path": "/usr/lib/libobjc.A.dylib",
+     "inlined": false,
+     "file": "",
+     "line": 0
+    },
+    {
+     "index": 2,
+     "pc": "0x1806def7c",
+     "sp": "0xffffffffffffffff",
+     "function": "-[__NSSingleObjectArrayI objectAtIndex:]",
+     "display": "-[__NSSingleObjectArrayI objectAtIndex:]",
+     "module": "CoreFoundation",
+     "module_path": "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation",
+     "inlined": false,
+     "file": "",
+     "line": 0
+    },
+    {
+     "index": 3,
+     "pc": "0x100003a00",
+     "sp": "0xffffffffffffffff",
+     "function": "why_demo.nsException() -> ()",
+     "display": "nsException()",
+     "module": "why-demo",
+     "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+     "inlined": false,
+     "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+     "line": 184
+    },
+    {
+     "index": 4,
+     "pc": "0x1000028f4",
+     "sp": "0xffffffffffffffff",
+     "function": "reabstraction thunk helper from @escaping @callee_guaranteed () -> () to @escaping @callee_guaranteed () -> (@out ())",
+     "display": "thunk for @escaping @callee_guaranteed () -> ()",
+     "module": "why-demo",
+     "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+     "inlined": false,
+     "file": "/<compiler-generated>",
+     "line": 0
+    },
+    {
+     "index": 5,
+     "pc": "0x100004228",
+     "sp": "0xffffffffffffffff",
+     "function": "reabstraction thunk helper from @escaping @callee_guaranteed () -> (@out ()) to @escaping @callee_guaranteed () -> ()",
+     "display": "thunk for @escaping @callee_guaranteed () -> (@out ())",
+     "module": "why-demo",
+     "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+     "inlined": false,
+     "file": "/<compiler-generated>",
+     "line": 0
+    },
+    {
+     "index": 6,
+     "pc": "0x100001f48",
+     "sp": "0xffffffffffffffff",
+     "function": "main",
+     "display": "main",
+     "module": "why-demo",
+     "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+     "inlined": false,
+     "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+     "line": 210
+    },
+    {
+     "index": 7,
+     "pc": "0x1802ac4e4",
+     "sp": "0xffffffffffffffff",
+     "function": "start",
+     "display": "start",
+     "module": "dyld",
+     "module_path": "/usr/lib/dyld",
+     "inlined": false,
+     "file": "",
+     "line": 0
+    }
+   ]
+  },
+  "caller_prologue": [],
+  "main_executable": "/src/lldb-why/demo/.build/debug/why-demo"
+ }
+}

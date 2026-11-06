@@ -223,6 +223,15 @@ class AbortTests(unittest.TestCase):
         self.assertEqual(d.rule_id, "malloc-error")
         self.assertIn("double free", d.verdict)
 
+    def test_double_free_trap_in_mfm_free(self):
+        # Real case on macOS 26: free() twice traps (EXC_BREAKPOINT) inside libsystem_malloc
+        frames = stack(("mfm_free.cold.4", "libsystem_malloc.dylib"), ("mfm_free", "libsystem_malloc.dylib"),
+                       ("doubleFree()", "demo"), ("main", "demo"))
+        d = diagnose(trap(frames, "EXC_BREAKPOINT (code=1, subcode=0x1804aa058)"))
+        self.assertEqual(d.rule_id, "malloc-error")
+        self.assertIn("double free", d.verdict)
+        self.assertEqual(d.user_frame.name, "doubleFree()")
+
     def test_deliberate_abort(self):
         d = diagnose(sigabrt(stack(*(ABORT_FRAMES + [("main", "demo"), ("start", "dyld")]))))
         self.assertEqual(d.rule_id, "abort-deliberate")

@@ -1,0 +1,157 @@
+{
+ "description": "Captured from `why-demo dispatch-sync-main` on macOS 26.6.2 (arm64).",
+ "expect": {
+  "rule_id": "client-bug",
+  "confidence": "high",
+  "verdict_contains": [
+   "dispatch_sync"
+  ]
+ },
+ "context": {
+  "stop": {
+   "reason": "exception",
+   "description": "EXC_BREAKPOINT (code=1, subcode=0x1804cb760)",
+   "exc_type": 6,
+   "exc_code": "0x1",
+   "exc_subcode": "0x1804cb760",
+   "signal": null,
+   "fault_address": null,
+   "instrumentation": "",
+   "instrumentation_message": "",
+   "is_fatal": false
+  },
+  "thread": {
+   "index": 1,
+   "name": "",
+   "queue": "com.apple.main-thread",
+   "is_main": true
+  },
+  "frames": [
+   {
+    "index": 0,
+    "pc": "0x1804cb760",
+    "sp": "0x16fdfcfd0",
+    "function": "__DISPATCH_WAIT_FOR_QUEUE__",
+    "display": "__DISPATCH_WAIT_FOR_QUEUE__",
+    "module": "libdispatch.dylib",
+    "module_path": "/usr/lib/system/libdispatch.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 1,
+    "pc": "0x1804cb1f8",
+    "sp": "0x16fdfd010",
+    "function": "_dispatch_sync_f_slow",
+    "display": "_dispatch_sync_f_slow",
+    "module": "libdispatch.dylib",
+    "module_path": "/usr/lib/system/libdispatch.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   },
+   {
+    "index": 2,
+    "pc": "0x100003e60",
+    "sp": "0x16fdfd0b0",
+    "function": "why_demo.dispatchSyncMain() -> ()",
+    "display": "dispatchSyncMain()",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 177
+   },
+   {
+    "index": 3,
+    "pc": "0x1000028f4",
+    "sp": "0x16fdfd120",
+    "function": "reabstraction thunk helper from @escaping @callee_guaranteed () -> () to @escaping @callee_guaranteed () -> (@out ())",
+    "display": "thunk for @escaping @callee_guaranteed () -> ()",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/<compiler-generated>",
+    "line": 0
+   },
+   {
+    "index": 4,
+    "pc": "0x100004228",
+    "sp": "0x16fdfd140",
+    "function": "reabstraction thunk helper from @escaping @callee_guaranteed () -> (@out ()) to @escaping @callee_guaranteed () -> ()",
+    "display": "thunk for @escaping @callee_guaranteed () -> (@out ())",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/<compiler-generated>",
+    "line": 0
+   },
+   {
+    "index": 5,
+    "pc": "0x100001f48",
+    "sp": "0x16fdfd160",
+    "function": "main",
+    "display": "main",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 210
+   },
+   {
+    "index": 6,
+    "pc": "0x1802ac4e4",
+    "sp": "0x16fdfda00",
+    "function": "start",
+    "display": "start",
+    "module": "dyld",
+    "module_path": "/usr/lib/dyld",
+    "inlined": false,
+    "file": "",
+    "line": 0
+   }
+  ],
+  "total_frames": 7,
+  "arch": "arm64",
+  "platform": "macos",
+  "address_mask": "0xffff800000000000",
+  "pagezero_end": "0x100000000",
+  "registers": {
+   "x9": "0x3",
+   "x15": "0xadd010000",
+   "x16": "0x1804cb3e4",
+   "x17": "0x1ed0ba0c8",
+   "fp": "0x16fdfd000",
+   "lr": "0x1804cb1f8",
+   "sp": "0x16fdfcfd0",
+   "pc": "0x1804cb760"
+  },
+  "fault_region": null,
+  "pc_region": {
+   "base": "0x1802c8000",
+   "end": "0x180670000",
+   "readable": true,
+   "writable": false,
+   "executable": true,
+   "mapped": true,
+   "type": "",
+   "image": "libdispatch.dylib",
+   "section": "__TEXT.__text"
+  },
+  "stack_region": {
+   "base": "0x16f604000",
+   "end": "0x16fe00000",
+   "readable": true,
+   "writable": true,
+   "executable": false,
+   "mapped": true,
+   "type": "stack",
+   "image": "",
+   "section": ""
+  },
+  "exception": null,
+  "caller_prologue": [],
+  "main_executable": "/src/lldb-why/demo/.build/debug/why-demo"
+ }
+}

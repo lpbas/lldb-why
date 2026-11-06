@@ -8,6 +8,7 @@ PATHS = {
     "libsystem_kernel.dylib": "/usr/lib/system/libsystem_kernel.dylib",
     "libsystem_pthread.dylib": "/usr/lib/system/libsystem_pthread.dylib",
     "libsystem_c.dylib": "/usr/lib/system/libsystem_c.dylib",
+    "libsystem_malloc.dylib": "/usr/lib/system/libsystem_malloc.dylib",
     "libswiftCore.dylib": "/usr/lib/swift/libswiftCore.dylib",
     "libswift_Concurrency.dylib": "/usr/lib/swift/libswift_Concurrency.dylib",
     "libdispatch.dylib": "/usr/lib/system/libdispatch.dylib",
