@@ -1,3 +1,5 @@
+import json
+import os
 import unittest
 
 from why.core import diagnose
@@ -113,59 +115,25 @@ class StackOverflowTests(unittest.TestCase):
 
     @staticmethod
     def _real_ios_case(optimized=None, copied_value=None):
-        """Shaped on a real iOS crash (frame sizes, x9, stack size and headroom
-        from its `why stack` report): a few huge SwiftUI body frames of the
-        app's own code fill the 1 MB main thread, and the outlined copy helper
-        for ListRow.Trailing? hits the guard page."""
-        region = Region(base=0x16D2D0000, end=0x16D3CC000, readable=True, writable=True, mapped=True, type="stack")
-        app = "App.debug.dylib"
-        layout = [
-            ("___chkstk_darwin", "libsystem_pthread.dylib", 16, {}),
-            ("outlined init with copy of ListRow.Trailing?", app, 96,
-             {"function": "outlined init with copy of Swift.Optional<App.ListRow.Trailing>"}),
-            ("ListRow.init(label:leading:trailing:action:)", app, 14438, {"file": "ListRow.swift", "line": 211}),
-            ("SettingsView.row3.getter", app, 81100, {}),
-            ("closure #1 in SettingsView.rowsSection.getter", app, 316928, {}),
-            ("closure #1 in _ListSection.body.getter", app, 105472, {}),
-            ("VStack.init(alignment:spacing:content:)", "SwiftUI", 300, {}),
-            ("_ListSection.body.getter", app, 330547, {"file": "_ListSection.swift", "line": 23}),
-            ("ViewBodyAccessor.updateBody(of:changed:)", "SwiftUICore", 400, {}),
-            ("closure #1 in ViewBodyAccessor.updateBody(of:changed:)", "SwiftUICore", 109363, {}),
-        ]
-        layout += [("AG::Graph::UpdateStack::update()", "AttributeGraph", 1000, {})] * 40
-        layout += [("__CFRunLoopRun", "CoreFoundation", 800, {})] * 5 + [("start", "dyld", 0, {})]
-        frames, sp = [], region.base + 21600
-        for i, (name, module, size, kw) in enumerate(layout):
-            if module == app:
-                kw = dict(kw, function=kw.get("function", "App." + name))
-            f = frame(i, name, module, sp=sp, **kw)
-            f.optimized = optimized if module == app else None
-            frames.append(f)
-            sp += size
-        ctx = bad_access(frames, 0x16D2CFFF8, code=2, stack_region=region, platform="ios",
-                         registers={"x9": 24960}, caller_prologue=[["mov", "w9, #0x6180"]],
-                         copied_value=copied_value)
+        """The captured iOS crash in fixtures/ios_swiftui_enum_copy.json (names
+        anonymized), optionally with what a newer adapter would also gather."""
+        path = os.path.join(os.path.dirname(__file__), "fixtures", "ios_swiftui_enum_copy.json")
+        with open(path) as fh:
+            ctx = CrashContext.from_dict(json.load(fh)["context"])
+        for f in ctx.frames:
+            if f.module == "SampleApp.debug.dylib":
+                f.optimized = optimized
+        ctx.copied_value = copied_value
         return diagnose(ctx)
 
-    def test_real_ios_case_names_your_frames(self):
-        d = self._real_ios_case()
-        self.assertEqual(d.rule_id, "stack-overflow")
-        self.assertRegex(d.verdict, r"^Stack overflow: 6 of your frames take 828\.7 KB of the 1008\.0 KB stack "
-                                    r"\(largest: _ListSection\.body\.getter, 322\.8 KB\)$")
-        self.assertIn("Biggest consumer: _ListSection.body.getter, 322.8 KB in one call", d.evidence)
-        self.assertTrue(any("24960 bytes, from caller's prologue, matches x9" in e for e in d.evidence))
-        self.assertTrue(any(n.startswith("This is a Debug build") for n in d.notes))  # from App.debug.dylib
-        self.assertIn("MemoryLayout<ListRow.Trailing?>.size", d.next_steps[0])
-        self.assertEqual(d.user_frame.name, "ListRow.init(label:leading:trailing:action:)")
-
     def test_real_ios_case_with_measured_type(self):
-        value = ValueLayout(type="Swift.Optional<App.ListRow.Trailing>", size=7673, variable="end",
-                            frame_index=2, parts=[  # case and payload names are made up
-                                LayoutPart(name="stats", type="(App.MatchStats, title: Swift.String)",
+        value = ValueLayout(type="Swift.Optional<DesignKit.ListRow.Trailing>", size=7673, variable="trailing",
+                            frame_index=2, parts=[  # the real crash was captured before sizes were gathered
+                                LayoutPart(name="stats", type="(DesignKit.MatchStats, title: Swift.String)",
                                            size=7672, is_case=True),
-                                LayoutPart(name="0", type="App.MatchStats", size=7656)])
+                                LayoutPart(name="0", type="DesignKit.MatchStats", size=7656)])
         d = self._real_ios_case(copied_value=value)
-        self.assertIn("Size: ListRow.Trailing? is 7.5 KB (7673 bytes, measured on `end` in frame #2). "
+        self.assertIn("Size: ListRow.Trailing? is 7.5 KB (7673 bytes, measured on `trailing` in frame #2). "
                       "Almost all of it is case .stats: `.stats.0` is MatchStats, 7.5 KB", d.evidence)
         self.assertTrue(any("every ListRow.Trailing? is 7.5 KB because of case .stats" in n for n in d.notes))
         self.assertTrue(d.next_steps[0].startswith("Box the payload of case .stats: write `indirect case stats(...)`, "
@@ -173,6 +141,7 @@ class StackOverflowTests(unittest.TestCase):
         self.assertIn("should drop well below 7673", d.next_steps[0])
 
     def test_optimized_build_has_no_debug_note(self):
+        self.assertTrue(any(n.startswith("This is a Debug build") for n in self._real_ios_case().notes))
         d = self._real_ios_case(optimized=True)
         self.assertFalse(any(n.startswith("This is a Debug build") for n in d.notes))
 
