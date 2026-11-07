@@ -117,3 +117,46 @@ def matches_any(frame, patterns):
         if text and any(re.search(p, text) for p in patterns):
             return True
     return False
+
+
+# --- compiler-generated value helpers -------------------------------------------
+
+_OUTLINED = re.compile(r"^outlined (?:init with copy|init with take|copy|assign with copy|assign with take|destroy) of (.+)$")
+
+
+def outlined_type(frame, qualified=False):
+    """The type an "outlined init with copy of T" (and similar) helper works
+    on, or None. `qualified` prefers the full name from the debug info
+    ("Swift.Optional<App.ListItem.EndContent>") over the display name
+    ("ListItem.EndContent?")."""
+    names = (frame.function, frame.display) if qualified else (frame.display, frame.function)
+    for text in names:
+        m = _OUTLINED.match(text or "")
+        if m:
+            return m.group(1)
+    return None
+
+
+_OPTIONAL = re.compile(r"\bSwift\.Optional<([^<>]*)>")
+_MODULE_PREFIX = re.compile(r"(?<![\w.])[A-Za-z_]\w*\.(?=[A-Za-z_])")
+
+
+def short_type(name):
+    """A qualified Swift type name the way Swift code spells it:
+    "Swift.Optional<App.ListItem.EndContent>" -> "ListItem.EndContent?"."""
+    prev = None
+    while prev != name:
+        prev, name = name, _OPTIONAL.sub(r"\1?", name)
+    return _MODULE_PREFIX.sub("", name)
+
+
+_DEBUG_PATH = re.compile(r"/Build/Products/Debug(?:-[a-z]+)?/|/\.build/debug/|/\.build/[^/]+/debug/")
+
+
+def is_unoptimized(frame):
+    """True when frame's code was compiled without optimization, from the
+    debug info when the adapter recorded it, else from the build layout
+    (Xcode's debug dylib, a Debug products folder, SwiftPM's debug folder)."""
+    if frame.optimized is not None:
+        return not frame.optimized
+    return frame.module.endswith(".debug.dylib") or bool(_DEBUG_PATH.search(frame.module_path or ""))

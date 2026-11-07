@@ -6,6 +6,21 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Stack overflows in an "outlined init with copy of T" helper now report T's
+  real size, measured on a variable of that type in the frames above, and the
+  enum case or stored property that makes it big. The next step names the
+  case to box. No code runs in the crashed process.
+- A note when the large frames come from a Debug (unoptimized) build, read
+  from the debug info (`SBFunction.GetIsOptimized`).
+- `enum-copy` demo scenario: the stack overflows inside the outlined copy
+  helper, like the real crash that motivated `why`.
+
+### Changed
+- When your own frames take most of the stack, the verdict says so:
+  "8 of your frames take 828.9 KB of the 1008.0 KB stack (largest: ...)".
+- "Biggest consumer: X, 1 calls = ..." now reads "X, 322.8 KB in one call".
+
 ## [0.1.0]
 
 ### Added

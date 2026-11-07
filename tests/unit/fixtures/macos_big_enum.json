@@ -4,7 +4,7 @@
   "rule_id": "stack-overflow",
   "confidence": "high",
   "verdict_contains": [
-   "deep chain of large frames"
+   "44 of your frames take 1014.8 KB of the 1.03 MB stack (cardBody(_:_:_:depth:) uses 42.1 KB per call, 14 calls deep)"
   ],
   "user_frame": "cardBody(_:_:_:depth:)"
  },

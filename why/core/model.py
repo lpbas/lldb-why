@@ -84,6 +84,7 @@ class Frame(_Serializable):
     inlined: bool = False
     file: str = ""
     line: int = 0
+    optimized: Optional[bool] = None   # from the debug info; None when unknown (no debug info, older fixtures)
 
     _HEX = ("pc", "sp")
 
@@ -159,6 +160,31 @@ class ThreadInfo(_Serializable):
 
 
 @dataclass
+class LayoutPart(_Serializable):
+    """One step into a value: a stored property, tuple element or enum case."""
+
+    name: str = ""
+    type: str = ""
+    size: int = 0
+    is_case: bool = False   # an enum case (the one the value currently holds)
+
+
+@dataclass
+class ValueLayout(_Serializable):
+    """The size of a value found in the crashed thread's frames, measured by
+    lldb from the type metadata (no code runs in the process), and the chain
+    of its largest parts."""
+
+    type: str = ""          # as lldb names it, e.g. "Swift.Optional<App.ListItem.EndContent>"
+    size: int = 0
+    variable: str = ""      # where it was read, e.g. "template.end"
+    frame_index: int = 0
+    parts: List[LayoutPart] = field(default_factory=list)   # largest child, then its largest child, ...
+
+    _NESTED = {"parts": [LayoutPart]}
+
+
+@dataclass
 class LanguageException(_Serializable):
     """An Objective-C / C++ exception that was in flight."""
 
@@ -187,6 +213,7 @@ class CrashContext(_Serializable):
     exception: Optional[LanguageException] = None
     caller_prologue: List[List[str]] = field(default_factory=list)  # [[mnemonic, operands], ...] of frame 1, up to its pc
     main_executable: str = ""
+    copied_value: Optional[ValueLayout] = None   # the value an outlined copy helper was copying at a chkstk crash
 
     _HEX = ("address_mask", "pagezero_end")
     _HEX_DICT = ("registers",)
@@ -198,6 +225,7 @@ class CrashContext(_Serializable):
         "pc_region": Region,
         "stack_region": Region,
         "exception": LanguageException,
+        "copied_value": ValueLayout,
     }
 
     @property

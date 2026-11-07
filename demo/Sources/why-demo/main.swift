@@ -18,6 +18,8 @@ let scenarios: [(name: String, summary: String, run: () -> Void)] = [
     ("recursion-main", "infinite recursion on the main thread (8 MB on macOS)", recursion),
     ("big-enum", "deep view-like chain copying a 7.6 KB enum by value, on a 1 MB stack (iOS main thread)",
      { onThread(stackSize: 1 << 20, bigEnum) }),
+    ("enum-copy", "a few huge view-like frames, then copying the 7.6 KB enum overflows inside the outlined copy helper",
+     { onThread(stackSize: 1 << 20, enumCopy) }),
     ("use-after-free", "over-release through Unmanaged", useAfterFree),
     ("bad-function-pointer", "calls a C function pointer made from a bad integer", badFunctionPointer),
     ("force-unwrap", "force unwrap of a nil Optional", forceUnwrap),
@@ -91,6 +93,42 @@ struct ListItem {
 func bigEnum() {
     let items = (0..<4).map { ListItem(title: "Match \($0)", end: .scoreboard(.init(), title: "Live")) }
     print(sectionBody(items, depth: 0))
+}
+
+/// The exact shape of the motivating crash: big frames fill most of the
+/// stack, then building one more row copies `EndContent?`, and the
+/// compiler-generated "outlined init with copy" helper is the frame that
+/// hits the guard page.
+@inline(never) func makeRow(_ template: ListItem, index: Int) -> Int {
+    let row = ListItem(title: "Row \(index)", end: template.end)
+    return row.title.count
+}
+
+@inline(never) func screenBody(_ template: ListItem, level: Int) -> Int {
+    // Each level keeps a few rows in locals, like a large SwiftUI body getter.
+    let header = template, footer = template, highlighted = template
+    if stackLeft() < 64 << 10 {
+        var count = 0
+        demo_call_with_stack_left(enumCopyHeadroom) { count = makeRow(highlighted, index: level) }
+        return count + header.title.count
+    }
+    return screenBody(footer, level: level + 1) + header.title.count
+}
+
+/// Bytes left when makeRow is called: enough for makeRow's own frame, too
+/// little for the outlined copy helper (~15 KB) it calls.
+let enumCopyHeadroom = 24 << 10
+
+func enumCopy() {
+    let template = ListItem(title: "Match", end: .scoreboard(.init(), title: "Live"))
+    print(screenBody(template, level: 0))
+}
+
+func stackLeft() -> Int {
+    var marker = 0
+    let here = withUnsafeMutablePointer(to: &marker) { Int(bitPattern: $0) }
+    let bottom = Int(bitPattern: pthread_get_stackaddr_np(pthread_self())) - pthread_get_stacksize_np(pthread_self())
+    return here - bottom
 }
 
 final class Session {

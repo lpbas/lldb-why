@@ -10,44 +10,50 @@ frame, frame 0's symbol. It just isn't interpreted. `why` interprets it.
 
 ## Before and after
 
-What the debugger gives you (real output from the [demo app](demo/README.md)):
+What the debugger gives you (real output from the [demo app](demo/README.md)'s
+`enum-copy` scenario, shaped on a real SwiftUI crash):
 
 ```
 * thread #2, stop reason = EXC_BAD_ACCESS (code=2, address=0x16fe03ff8)
   * frame #0: 0x0000000180672c5c libsystem_pthread.dylib`___chkstk_darwin + 60
-    frame #1: 0x0000000100006c0c why-demo`cardBody(item=<unavailable>, ...) at main.swift:85
-    frame #2: 0x0000000100006bc8 why-demo`rowBody(item=why_demo.ListItem @ 0x000000016fe0edc8, ...) at main.swift:82:12
-    frame #3: 0x0000000100006b1c why-demo`sectionBody(items=4 values, depth=13) at main.swift:77:5
+    frame #2: 0x0000000100007b48 why-demo`makeRow(template=why_demo.ListItem, index=30) at main.swift:103:61
+    frame #3: 0x0000000100008028 why-demo`closure #1 in screenBody(count=0, highlighted=why_demo.ListItem, level=30) at main.swift:112:63
     ...
 ```
 
-What `why` adds:
+`bt` even hides frame #1, the compiler-generated helper that actually ran out
+of stack. What `why` adds:
 
 ```
 (lldb) why
-why: Stack overflow: deep chain of large frames (cardBody(_:_:_:depth:) uses 42.1 KB per call, 14 calls deep)  [confidence: high]
+why: Stack overflow: 38 of your frames take 1.01 MB of the 1.03 MB stack (screenBody(_:level:) uses 30.5 KB per call, 31 calls deep)  [confidence: high]
 
 Evidence
   - EXC_BAD_ACCESS code=2 (KERN_PROTECTION_FAILURE: memory is mapped there, but this kind of access is not allowed) at address 0x16fe03ff8
   - Address 0x16fe03ff8 is 8 B below the stack of thread #2, in its guard page
   - Crashed in #0 ___chkstk_darwin (libsystem_pthread.dylib)
-  - Stack: 1015.3 KB used of 1.03 MB (96.1%) across 47 frames on thread #2
-  - Frame 0 is ___chkstk_darwin, the stack probe for big frames: #1 cardBody(_:_:_:depth:) at main.swift:85 (why-demo) asked for 45.3 KB (46384 bytes, from caller's prologue, matches x9) but only 20.6 KB was left
-  - Biggest consumer: cardBody(_:_:_:depth:), 14 calls = 589.3 KB (42.1 KB per call)
+  - Stack: 1.01 MB used of 1.03 MB (98.0%) across 41 frames on thread #2
+  - Frame 0 is ___chkstk_darwin, the stack probe for big frames: #1 outlined init with copy of ListItem.EndContent? at <compiler-generated> (why-demo) asked for 15.0 KB (15312 bytes, from caller's prologue, matches x9) but only 928 B was left
+  - Size: ListItem.EndContent? is 7.5 KB (7697 bytes, measured on `template.end` in frame #2). Almost all of it is case .scoreboard: `.scoreboard.0` is ListItem.Scoreboard, 7.5 KB
+  - Biggest consumer: screenBody(_:level:), 31 calls = 944.5 KB (30.5 KB per call)
 
 Where
-  - Your code: #1 cardBody(_:_:_:depth:) at main.swift:85 (why-demo)
+  - Your code: #2 makeRow(_:index:) at main.swift:103 (why-demo)
+  - Via compiler-generated #1 outlined init with copy of ListItem.EndContent? at <compiler-generated> (why-demo)
 
 Stack
-  - Largest frames: 45.3 KB cardBody(_:_:_:depth:)
-  - Frames: 44 yours (1014.8 KB), 0 SwiftUI (0 B), 3 system (608 B)
+  - Largest frames: 52.8 KB enumCopy(), 30.5 KB screenBody(_:level:)
+  - Frames: 38 yours (1.01 MB), 0 SwiftUI (0 B), 3 system (608 B)
 
 Notes
+  - 'outlined init with copy of ListItem.EndContent?' is a compiler-generated helper that copies a value of type ListItem.EndContent?, and every copy reserves 7.5 KB of stack. An enum is as large as its largest case, so every ListItem.EndContent? is 7.5 KB because of case .scoreboard, even when it holds a small case or nil
   - Large Swift frames come from big value types (structs/enums with many stored properties or large payloads) being copied or kept in locals. Box large payloads (an `indirect` enum case or a final class wrapper) so each copy is one pointer
+  - This is a Debug build: without optimization (-Onone) every temporary gets its own stack slot, so frames are often several times bigger than in Release. A Release build may not crash here, but it copies the same values, so make the type smaller rather than rely on the optimizer
   - Default stacks: iOS main thread ~1 MB, secondary threads 512 KB, macOS main thread 8 MB. The simulator may use macOS's limits, so overflows can show up only on device
 
 Next steps
-  1. Run `why stack` for the full stack usage report
+  1. Box the payload of case .scoreboard: write `indirect case scoreboard(...)`, or keep ListItem.Scoreboard in a final class. Then `expression -l swift -- MemoryLayout<ListItem.EndContent?>.size` should drop well below 7697
+  2. Run `why stack` for the full stack usage report
 ```
 
 ## Install
@@ -88,7 +94,7 @@ Rules are checked in order; the first match wins.
 
 | Crash | How it's recognized | Confidence |
 |---|---|---|
-| **Stack overflow**: infinite recursion, deep recursion, a deep chain of large frames, or one oversized frame | Frame 0 is `___chkstk_darwin`, the fault is within 128 KB below the thread's stack, or sp is already below it. For chkstk, the requested frame size is read from the caller's prologue and cross-checked with x9. | high |
+| **Stack overflow**: infinite recursion, deep recursion, a deep chain of large frames, or one oversized frame | Frame 0 is `___chkstk_darwin`, the fault is within 128 KB below the thread's stack, or sp is already below it. For chkstk, the requested frame size is read from the caller's prologue and cross-checked with x9. When the frame is a compiler-generated copy helper, the copied value is measured from a variable in the frames above (no code runs in the app), down to the enum case or property that makes it big. | high |
 | **Heap corruption / double free** | malloc's own error paths (`___BUG_IN_CLIENT_OF_LIBMALLOC_...`, `malloc_error_break`, a trap inside `libsystem_malloc`) | high |
 | **Use-after-free / over-release** | A bad access inside `swift_retain/release`, `_swift_release_dealloc`, `objc_retain/release` or `objc_msgSend` | high |
 | **Garbage function pointer or closure** | fault address == pc | high |

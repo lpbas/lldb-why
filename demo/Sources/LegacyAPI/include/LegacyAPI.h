@@ -18,4 +18,9 @@ struct legacy_header * _Nonnull legacy_find_header(const char * _Nonnull name);
 /// @MainActor-isolated, and Swift checks that at runtime.
 void legacy_run_on_background(void (^ _Nonnull block)(void));
 
+/// Demo harness, not part of the "legacy" API: grows the stack until about
+/// `bytes` are left, then calls `block`. Lets a scenario crash at a precise
+/// point without depending on how big every other frame happens to be.
+void demo_call_with_stack_left(size_t bytes, void (^ _Nonnull block)(void));
+
 #endif

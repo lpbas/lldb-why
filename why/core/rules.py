@@ -45,9 +45,6 @@ ABORT = [r"^abort$", r"^__abort", r"^abort_with_"]
 
 # --- stack overflow -------------------------------------------------------------
 
-_OUTLINED = re.compile(r"^outlined (?:init with copy|init with take|copy|assign with copy|assign with take|destroy) of (.+)$")
-
-
 def _is_overflow(f):
     return is_chkstk(f.frame0) or f.fault_below_stack() is not None or f.sp_below_stack()
 
@@ -65,6 +62,12 @@ def _top_function(s):
     return s.by_function[0] if s and s.by_function else None
 
 
+def _per_call(top):
+    if top.count > 1:
+        return "%s uses %s per call, %d calls deep" % (top.name, fmt_size(top.size // top.count), top.count)
+    return None
+
+
 def _overflow_verdict(f, v):
     s = f.stack
     top = _top_function(s)
@@ -72,11 +75,13 @@ def _overflow_verdict(f, v):
         cycle = " -> ".join(s.cycle)
         return "Stack overflow: infinite recursion in %s (%d repetitions)" % (cycle, s.cycle_reps)
     if s.pattern == "large-frames" and top:
-        per_call = top.size // max(1, top.count)
-        if top.count > 1:
-            return "Stack overflow: deep chain of large frames (%s uses %s per call, %d calls deep)" % (
-                top.name, fmt_size(per_call), top.count)
-        return "Stack overflow: deep chain of large frames (%s alone uses %s)" % (top.name, fmt_size(top.size))
+        yours, count = s.category_bytes.get("user", 0), s.counts.get("user", 0)
+        detail = _per_call(top) or "largest: %s, %s" % (top.name, fmt_size(top.size))
+        if yours * 2 >= s.used:
+            # Your own frames are the problem, not how deep the framework nests.
+            of = "of the %s stack" % fmt_size(s.size) if s.size else "of the %s used" % fmt_size(s.used)
+            return "Stack overflow: %d of your frames take %s %s (%s)" % (count, fmt_size(yours), of, detail)
+        return "Stack overflow: deep chain of large frames (%s)" % detail
     if s.pattern == "recursion":
         return "Stack overflow: deep recursion in %s (%d levels)" % (" -> ".join(s.cycle), s.cycle_reps)
     if s.chkstk and s.chkstk.requested:
@@ -121,27 +126,59 @@ def _overflow_pattern(f, v):
         return "%s repeats %d times, %s per repetition" % (" -> ".join(s.cycle), s.cycle_reps, fmt_size(s.cycle_frame_size))
     top = _top_function(s)
     if top:
-        return "Biggest consumer: %s, %d calls = %s (%s per call)" % (
-            top.name, top.count, fmt_size(top.size), fmt_size(top.size // max(1, top.count)))
+        if top.count > 1:
+            return "Biggest consumer: %s, %d calls = %s (%s per call)" % (
+                top.name, top.count, fmt_size(top.size), fmt_size(top.size // top.count))
+        return "Biggest consumer: %s, %s in one call" % (top.name, fmt_size(top.size))
     return None
 
 
 def _copied_type(f):
     c = f.stack.chkstk if f.stack else None
-    if c and c.caller:
-        m = _OUTLINED.match(c.caller.display or "") or _OUTLINED.match(c.caller.function or "")
-        if m:
-            return m.group(1)
-    return None
+    return F.outlined_type(c.caller) if c and c.caller else None
+
+
+def _layout(f):
+    """The measured size of the value the outlined helper was copying."""
+    lay = f.ctx.copied_value
+    return lay if lay is not None and lay.size and _copied_type(f) else None
+
+
+def _part_path(lay):
+    return "".join("." + p.name for p in lay.parts)
+
+
+def _overflow_value(f, v):
+    lay = _layout(f)
+    if lay is None:
+        return None
+    text = "Size: %s is %s (%d bytes, measured on `%s` in frame #%d)" % (
+        F.short_type(lay.type), fmt_size(lay.size), lay.size, lay.variable, lay.frame_index)
+    if lay.parts:
+        last = lay.parts[-1]
+        where = "case .%s" % lay.parts[0].name if lay.parts[0].is_case else "`%s`" % _part_path(lay)
+        text += ". Almost all of it is %s" % where
+        if len(lay.parts) > 1 or not lay.parts[0].is_case:
+            text += ": `%s` is %s, %s" % (_part_path(lay), F.short_type(last.type), fmt_size(last.size))
+    return text
 
 
 def _overflow_copy_note(f, v):
     t = _copied_type(f)
     if not t:
         return None
-    return ("'%s' is a compiler-generated helper that copies a value of type %s. A frame that big means the "
-            "type itself is several KB: an enum is as large as its largest payload, and every copy reserves "
-            "stack space" % (f.stack.chkstk.caller.name, t))
+    helper = f.stack.chkstk.caller.name
+    lay = _layout(f)
+    if lay is None:
+        return ("'%s' is a compiler-generated helper that copies a value of type %s. A frame that big means the "
+                "type itself is several KB: an enum is as large as its largest payload, and every copy reserves "
+                "stack space" % (helper, t))
+    text = ("'%s' is a compiler-generated helper that copies a value of type %s, and every copy reserves %s "
+            "of stack" % (helper, t, fmt_size(lay.size)))
+    if lay.parts and lay.parts[0].is_case:
+        text += (". An enum is as large as its largest case, so every %s is %s because of case .%s, even when "
+                 "it holds a small case or nil" % (t, fmt_size(lay.size), lay.parts[0].name))
+    return text
 
 
 def _overflow_kind_note(f, v):
@@ -149,11 +186,29 @@ def _overflow_kind_note(f, v):
     if s.pattern == "infinite-recursion":
         return ("Look for a missing base case, a computed property or getter that reads itself, or an override "
                 "calling itself instead of super")
-    if s.pattern in ("large-frames",) or (s.chkstk and s.chkstk.requested and s.chkstk.requested >= 8192):
+    if _large_frames(s):
         return ("Large Swift frames come from big value types (structs/enums with many stored properties or large "
                 "payloads) being copied or kept in locals. Box large payloads (an `indirect` enum case or a final "
                 "class wrapper) so each copy is one pointer")
     return None
+
+
+def _large_frames(s):
+    return s.pattern == "large-frames" or bool(s.chkstk and s.chkstk.requested and s.chkstk.requested >= 8192)
+
+
+def _overflow_build_note(f, v):
+    s = f.stack
+    if s.pattern in ("infinite-recursion", "recursion") or not _large_frames(s):
+        return None
+    big = [fs.frame for fs in s.largest[:3] if fs.size >= 4096 and F.is_user_frame(fs.frame)]
+    if s.chkstk and s.chkstk.caller is not None:
+        big.append(s.chkstk.caller)
+    if not any(F.is_unoptimized(fr) for fr in big):
+        return None
+    return ("This is a Debug build: without optimization (-Onone) every temporary gets its own stack slot, so "
+            "frames are often several times bigger than in Release. A Release build may not crash here, but it "
+            "copies the same values, so make the type smaller rather than rely on the optimizer")
 
 
 def _overflow_thread_note(f, v):
@@ -165,9 +220,21 @@ def _overflow_thread_note(f, v):
 
 def _overflow_type_step(f, v):
     t = _copied_type(f)
-    if t:
-        return "Check the copied type's size: `expression -l swift -- MemoryLayout<%s>.size`" % t
-    return None
+    if not t:
+        return None
+    check = "`expression -l swift -- MemoryLayout<%s>.size`" % t
+    lay = _layout(f)
+    if lay is None:
+        return "Check the copied type's size: %s" % check
+    if lay.parts and lay.parts[0].is_case:
+        case = lay.parts[0]
+        return ("Box the payload of case .%s: write `indirect case %s(...)`, or keep %s in a final class. Then %s "
+                "should drop well below %d" % (case.name, case.name, F.short_type(lay.parts[-1].type), check, lay.size))
+    if lay.parts:
+        return ("Store `%s` (%s) out of line, for example in a final class, so copies of %s share it. Then %s "
+                "should drop well below %d" % (_part_path(lay), F.short_type(lay.parts[-1].type), t, check, lay.size))
+    return "Box %s's large stored values so each copy is a pointer, then check that %s drops well below %d" % (
+        t, check, lay.size)
 
 
 def _overflow_recursion_step(f, v):
@@ -498,8 +565,8 @@ RULES = [
         when=_is_overflow,
         verdict=_overflow_verdict,
         confidence=_overflow_confidence,
-        evidence=[_overflow_usage, _overflow_sp, _overflow_chkstk, _overflow_pattern],
-        notes=[_overflow_copy_note, _overflow_kind_note, _overflow_thread_note],
+        evidence=[_overflow_usage, _overflow_sp, _overflow_chkstk, _overflow_value, _overflow_pattern],
+        notes=[_overflow_copy_note, _overflow_kind_note, _overflow_build_note, _overflow_thread_note],
         next_steps=[_overflow_type_step, _overflow_recursion_step, Steps.WHY_STACK],
         stack=True,
     ),

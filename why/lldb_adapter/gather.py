@@ -8,7 +8,9 @@ import re
 
 import lldb
 
-from ..core.model import CrashContext, Frame, LanguageException, Region, StopInfo, ThreadInfo
+from ..core.frames import outlined_type
+from ..core.model import (CrashContext, Frame, LanguageException, LayoutPart, Region, StopInfo, ThreadInfo,
+                           ValueLayout)
 from ..core.stack import is_chkstk
 
 DEFAULT_MAX_FRAMES = 250000   # an 8 MB stack of 48-byte frames is ~175k frames
@@ -71,6 +73,7 @@ def gather(debugger, thread=None, max_frames=DEFAULT_MAX_FRAMES):
         ctx.exception = _language_exception(thread)
     if len(ctx.frames) > 1 and is_chkstk(ctx.frames[0]):
         ctx.caller_prologue = _prologue(target, thread.GetFrameAtIndex(1))
+        ctx.copied_value = _copied_value(thread, ctx.frames)
     return ctx
 
 
@@ -122,6 +125,7 @@ def _frame(f, index):
     module = f.GetModule()
     spec = module.GetFileSpec() if module.IsValid() else None
     line_entry = f.GetLineEntry()
+    function = f.GetFunction()
     file, line = "", 0
     if line_entry.IsValid() and line_entry.GetFileSpec().IsValid():
         file = line_entry.GetFileSpec().fullpath or ""
@@ -137,6 +141,7 @@ def _frame(f, index):
         inlined=f.IsInlined(),
         file=file,
         line=line,
+        optimized=function.GetIsOptimized() if function.IsValid() else None,
     )
 
 
@@ -273,3 +278,76 @@ def _prologue(target, caller):
             break
         out.append([ins.GetMnemonic(target) or "", ins.GetOperands(target) or ""])
     return out[:-1]  # drop the call itself
+
+
+# --- size of the value an outlined copy helper was copying -------------------------
+
+LAYOUT_SEARCH_FRAMES = 6    # frames above the helper to look for a variable of that type
+LAYOUT_MAX_CHILDREN = 64
+LAYOUT_DEPTH = 4
+
+
+def _copied_value(thread, frames):
+    """At a chkstk crash in "outlined init with copy of T", finds a variable of
+    type T in the frames above and measures it. lldb computes the size from
+    the type metadata, so no code runs in the crashed process. Swift types
+    can't be sized from SBType alone (FindFirstType misses them and their
+    static byte size is 0), but SBValue.GetByteSize() works."""
+    if len(frames) < 2 or not is_chkstk(frames[0]):
+        return None
+    wanted = outlined_type(frames[1], qualified=True)
+    if not wanted:
+        return None
+    names = {wanted, "Swift.Optional<%s>" % wanted}
+    m = re.match(r"^Swift\.Optional<(.*)>$", wanted)
+    if m:
+        names.add(m.group(1))
+    try:
+        for index in range(2, min(len(frames), 2 + LAYOUT_SEARCH_FRAMES)):
+            frame = thread.GetFrameAtIndex(index)
+            # Arguments first: locals may not be initialized yet.
+            for arguments, locals_ in ((True, False), (False, True)):
+                values = frame.GetVariables(arguments, locals_, False, True)
+                for k in range(values.GetSize()):
+                    found = _find_value(values.GetValueAtIndex(k), names, depth=1)
+                    if found is not None:
+                        path, value = found
+                        return _layout(value, path, index)
+    except Exception:  # never let an optional extra break the diagnosis
+        return None
+    return None
+
+
+def _find_value(value, names, depth):
+    """value, or one of its stored properties, if its type is one of `names`."""
+    if not value.IsValid():
+        return None
+    if (value.GetTypeName() or "") in names and value.GetByteSize():
+        return value.GetName() or "", value
+    if depth and value.GetType().GetTypeClass() == lldb.eTypeClassStruct:
+        for i in range(min(value.GetNumChildren(), LAYOUT_MAX_CHILDREN)):
+            found = _find_value(value.GetChildAtIndex(i), names, depth - 1)
+            if found is not None:
+                return "%s.%s" % (value.GetName() or "", found[0]), found[1]
+    return None
+
+
+def _layout(value, variable, frame_index):
+    """The value's size, then its largest part while that part is most of it."""
+    layout = ValueLayout(type=value.GetTypeName() or "", size=value.GetByteSize(), variable=variable,
+                         frame_index=frame_index)
+    current = value
+    for _ in range(LAYOUT_DEPTH):
+        children = [current.GetChildAtIndex(i) for i in range(min(current.GetNumChildren(), LAYOUT_MAX_CHILDREN))]
+        children = [c for c in children if c.IsValid()]
+        if not children:
+            break
+        biggest = max(children, key=lambda c: c.GetByteSize())
+        size = biggest.GetByteSize()
+        if size < 256 or size * 2 < current.GetByteSize():
+            break
+        layout.parts.append(LayoutPart(
+            name=biggest.GetName() or "", type=biggest.GetTypeName() or "", size=size,
+            is_case=current.GetType().GetTypeClass() == lldb.eTypeClassUnion))
+        current = biggest
+    return layout

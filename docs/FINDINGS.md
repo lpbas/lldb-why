@@ -94,6 +94,33 @@ So:
   cross-check.
 * x86_64 passes the size in `rax` (*unverified*, from the ABI).
 
+## Sizing Swift values without running code
+
+Used to report how big the type copied by an "outlined init with copy of T"
+helper is (Xcode 26 lldb, Swift 6, debug build):
+
+* `SBTarget.FindFirstType` and `SBModule.FindFirstType` return nothing for
+  Swift types, whatever the spelling (`App.ListItem.EndContent`, `Swift.Optional<...>`,
+  `ListItem.EndContent?`, the mangled `$s...D` name). `SBModule.GetTypes()` does
+  list them, but `SBType.GetByteSize()` is 0 for every Swift type, static or
+  dynamic.
+* `SBValue.GetByteSize()` on a variable of that type returns the real size
+  (7697 bytes for the demo's `ListItem.EndContent?`), takes milliseconds, and
+  runs no code in the process. So `why` looks for an argument or local of type
+  T (or a stored property of one) in the frames above the helper.
+* The helper's `GetFunctionName()` is the qualified type
+  (`outlined init with copy of Swift.Optional<why_demo.ListItem.EndContent>`),
+  which matches the variable's `GetTypeName()` exactly. The display name uses
+  the short spelling (`ListItem.EndContent?`).
+* A Swift enum's type class is `eTypeClassUnion`, and its value has one child:
+  the case it currently holds, named after the case, with the payload as its
+  type (a tuple for several associated values, elements named `0`, `title`,
+  ...). An `Optional` of an enum is flattened: its child is the inner case.
+* `SBFunction.GetIsOptimized()` is False for `-Onone` code. The outlined
+  helpers have no `SBFunction` (symbol only).
+* `bt` hides the compiler-generated helper frame (it prints frames #0, #2, #3,
+  ...), but `SBThread.GetFrameAtIndex(1)` returns it.
+
 ## Exceptions
 
 * For an uncaught NSException the stop is `SIGABRT` with frames

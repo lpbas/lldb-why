@@ -1,0 +1,683 @@
+{
+ "description": "Captured from `why-demo enum-copy` on macOS 26.6.2 (arm64).",
+ "expect": {
+  "rule_id": "stack-overflow",
+  "confidence": "high",
+  "verdict_contains": [
+   "of your frames take"
+  ],
+  "user_frame": "makeRow(_:index:)",
+  "output_contains": [
+   "Almost all of it is case .scoreboard",
+   "This is a Debug build",
+   "Box the payload of case .scoreboard"
+  ]
+ },
+ "context": {
+  "stop": {
+   "reason": "exception",
+   "description": "EXC_BAD_ACCESS (code=2, address=0x16fe03ff8)",
+   "exc_type": 1,
+   "exc_code": "0x2",
+   "exc_subcode": "0x16fe03ff8",
+   "signal": null,
+   "fault_address": "0x16fe03ff8",
+   "instrumentation": "",
+   "instrumentation_message": "",
+   "is_fatal": false
+  },
+  "thread": {
+   "index": 2,
+   "name": "",
+   "queue": "",
+   "is_main": false
+  },
+  "frames": [
+   {
+    "index": 0,
+    "pc": "0x180672c5c",
+    "sp": "0x16fe043a0",
+    "function": "___chkstk_darwin",
+    "display": "___chkstk_darwin",
+    "module": "libsystem_pthread.dylib",
+    "module_path": "/usr/lib/system/libsystem_pthread.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0,
+    "optimized": null
+   },
+   {
+    "index": 1,
+    "pc": "0x10000e910",
+    "sp": "0x16fe043a0",
+    "function": "outlined init with copy of Swift.Optional<why_demo.ListItem.EndContent>",
+    "display": "outlined init with copy of ListItem.EndContent?",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/<compiler-generated>",
+    "line": 0,
+    "optimized": false
+   },
+   {
+    "index": 2,
+    "pc": "0x100007b48",
+    "sp": "0x16fe04400",
+    "function": "why_demo.makeRow(_: why_demo.ListItem, index: Swift.Int) -> Swift.Int",
+    "display": "makeRow(_:index:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 103,
+    "optimized": false
+   },
+   {
+    "index": 3,
+    "pc": "0x100008028",
+    "sp": "0x16fe09f20",
+    "function": "closure #1 () -> () in why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "closure #1 in screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 112,
+    "optimized": false
+   },
+   {
+    "index": 4,
+    "pc": "0x10000809c",
+    "sp": "0x16fe09f80",
+    "function": "reabstraction thunk helper from @escaping @callee_guaranteed () -> () to @escaping @callee_unowned @convention(block) () -> ()",
+    "display": "thunk for @escaping @callee_guaranteed () -> ()",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/<compiler-generated>",
+    "line": 0,
+    "optimized": false
+   },
+   {
+    "index": 5,
+    "pc": "0x100077220",
+    "sp": "0x16fe09fb0",
+    "function": "demo_call_with_stack_left",
+    "display": "demo_call_with_stack_left",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/LegacyAPI/LegacyAPI.c",
+    "line": 26,
+    "optimized": false
+   },
+   {
+    "index": 6,
+    "pc": "0x100007d58",
+    "sp": "0x16fe0d7d0",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 112,
+    "optimized": false
+   },
+   {
+    "index": 7,
+    "pc": "0x100007e30",
+    "sp": "0x16fe151b0",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 8,
+    "pc": "0x100007e30",
+    "sp": "0x16fe1cb90",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 9,
+    "pc": "0x100007e30",
+    "sp": "0x16fe24570",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 10,
+    "pc": "0x100007e30",
+    "sp": "0x16fe2bf50",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 11,
+    "pc": "0x100007e30",
+    "sp": "0x16fe33930",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 12,
+    "pc": "0x100007e30",
+    "sp": "0x16fe3b310",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 13,
+    "pc": "0x100007e30",
+    "sp": "0x16fe42cf0",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 14,
+    "pc": "0x100007e30",
+    "sp": "0x16fe4a6d0",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 15,
+    "pc": "0x100007e30",
+    "sp": "0x16fe520b0",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 16,
+    "pc": "0x100007e30",
+    "sp": "0x16fe59a90",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 17,
+    "pc": "0x100007e30",
+    "sp": "0x16fe61470",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 18,
+    "pc": "0x100007e30",
+    "sp": "0x16fe68e50",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 19,
+    "pc": "0x100007e30",
+    "sp": "0x16fe70830",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 20,
+    "pc": "0x100007e30",
+    "sp": "0x16fe78210",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 21,
+    "pc": "0x100007e30",
+    "sp": "0x16fe7fbf0",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 22,
+    "pc": "0x100007e30",
+    "sp": "0x16fe875d0",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 23,
+    "pc": "0x100007e30",
+    "sp": "0x16fe8efb0",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 24,
+    "pc": "0x100007e30",
+    "sp": "0x16fe96990",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 25,
+    "pc": "0x100007e30",
+    "sp": "0x16fe9e370",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 26,
+    "pc": "0x100007e30",
+    "sp": "0x16fea5d50",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 27,
+    "pc": "0x100007e30",
+    "sp": "0x16fead730",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 28,
+    "pc": "0x100007e30",
+    "sp": "0x16feb5110",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 29,
+    "pc": "0x100007e30",
+    "sp": "0x16febcaf0",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 30,
+    "pc": "0x100007e30",
+    "sp": "0x16fec44d0",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 31,
+    "pc": "0x100007e30",
+    "sp": "0x16fecbeb0",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 32,
+    "pc": "0x100007e30",
+    "sp": "0x16fed3890",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 33,
+    "pc": "0x100007e30",
+    "sp": "0x16fedb270",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 34,
+    "pc": "0x100007e30",
+    "sp": "0x16fee2c50",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 35,
+    "pc": "0x100007e30",
+    "sp": "0x16feea630",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 36,
+    "pc": "0x100007e30",
+    "sp": "0x16fef2010",
+    "function": "why_demo.screenBody(_: why_demo.ListItem, level: Swift.Int) -> Swift.Int",
+    "display": "screenBody(_:level:)",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 115,
+    "optimized": false
+   },
+   {
+    "index": 37,
+    "pc": "0x100002fc4",
+    "sp": "0x16fef99f0",
+    "function": "why_demo.enumCopy() -> ()",
+    "display": "enumCopy()",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/src/lldb-why/demo/Sources/why-demo/main.swift",
+    "line": 124,
+    "optimized": false
+   },
+   {
+    "index": 38,
+    "pc": "0x100076e70",
+    "sp": "0x16ff06d40",
+    "function": "reabstraction thunk helper from @escaping @callee_guaranteed @Sendable () -> () to @escaping @callee_unowned @convention(block) @Sendable () -> ()",
+    "display": "thunk for @escaping @callee_guaranteed @Sendable () -> ()",
+    "module": "why-demo",
+    "module_path": "/src/lldb-why/demo/.build/debug/why-demo",
+    "inlined": false,
+    "file": "/<compiler-generated>",
+    "line": 0,
+    "optimized": false
+   },
+   {
+    "index": 39,
+    "pc": "0x181f79b7c",
+    "sp": "0x16ff06d70",
+    "function": "__NSThread__start__",
+    "display": "__NSThread__start__",
+    "module": "Foundation",
+    "module_path": "/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation",
+    "inlined": false,
+    "file": "",
+    "line": 0,
+    "optimized": null
+   },
+   {
+    "index": 40,
+    "pc": "0x180677c58",
+    "sp": "0x16ff06fd0",
+    "function": "_pthread_start",
+    "display": "_pthread_start",
+    "module": "libsystem_pthread.dylib",
+    "module_path": "/usr/lib/system/libsystem_pthread.dylib",
+    "inlined": false,
+    "file": "",
+    "line": 0,
+    "optimized": null
+   }
+  ],
+  "total_frames": 41,
+  "arch": "arm64",
+  "platform": "macos",
+  "address_mask": "0xffff800000000000",
+  "pagezero_end": "0x100000000",
+  "registers": {
+   "x9": "0x3bd0",
+   "x15": "0x2",
+   "x16": "0x180672c20",
+   "x17": "0x3320776f52",
+   "fp": "0x16fe043f0",
+   "lr": "0x10000e910",
+   "sp": "0x16fe043a0",
+   "pc": "0x180672c5c"
+  },
+  "fault_region": {
+   "base": "0x16fe00000",
+   "end": "0x16fe04000",
+   "readable": false,
+   "writable": false,
+   "executable": false,
+   "mapped": false,
+   "type": "",
+   "image": "",
+   "section": ""
+  },
+  "pc_region": {
+   "base": "0x180670000",
+   "end": "0x180674000",
+   "readable": true,
+   "writable": false,
+   "executable": true,
+   "mapped": true,
+   "type": "",
+   "image": "libsystem_pthread.dylib",
+   "section": "__TEXT.__text"
+  },
+  "stack_region": {
+   "base": "0x16fe04000",
+   "end": "0x16ff0c000",
+   "readable": true,
+   "writable": true,
+   "executable": false,
+   "mapped": true,
+   "type": "stack",
+   "image": "",
+   "section": ""
+  },
+  "exception": null,
+  "caller_prologue": [
+   [
+    "stp",
+    "x28, x27, [sp, #-0x60]!"
+   ],
+   [
+    "stp",
+    "x26, x25, [sp, #0x10]"
+   ],
+   [
+    "stp",
+    "x24, x23, [sp, #0x20]"
+   ],
+   [
+    "stp",
+    "x22, x21, [sp, #0x30]"
+   ],
+   [
+    "stp",
+    "x20, x19, [sp, #0x40]"
+   ],
+   [
+    "stp",
+    "x29, x30, [sp, #0x50]"
+   ],
+   [
+    "add",
+    "x29, sp, #0x50"
+   ],
+   [
+    "mov",
+    "w9, #0x3bd0"
+   ],
+   [
+    "adrp",
+    "x16, 110"
+   ],
+   [
+    "ldr",
+    "x16, [x16, #0x820]"
+   ]
+  ],
+  "main_executable": "/src/lldb-why/demo/.build/debug/why-demo",
+  "copied_value": {
+   "type": "Swift.Optional<why_demo.ListItem.EndContent>",
+   "size": 7697,
+   "variable": "template.end",
+   "frame_index": 2,
+   "parts": [
+    {
+     "name": "scoreboard",
+     "type": "(why_demo.ListItem.Scoreboard, title: Swift.String)",
+     "size": 7696,
+     "is_case": true
+    },
+    {
+     "name": "0",
+     "type": "why_demo.ListItem.Scoreboard",
+     "size": 7680,
+     "is_case": false
+    }
+   ]
+  }
+ }
+}

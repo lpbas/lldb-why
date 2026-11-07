@@ -33,7 +33,8 @@ EXPECTED = {
     "nil-pointer": ("nil-deref", "high", "offset 0x28 of a nil pointer"),
     "recursion": ("stack-overflow", "high", "infinite recursion in countDown(_:)"),
     "recursion-main": ("stack-overflow", "high", "infinite recursion in countDown(_:)"),
-    "big-enum": ("stack-overflow", "high", "deep chain of large frames"),
+    "big-enum": ("stack-overflow", "high", "44 of your frames take"),
+    "enum-copy": ("stack-overflow", "high", "of your frames take"),
     "use-after-free": ("refcount-runtime", "high", "Use-after-free or over-release"),
     "bad-function-pointer": ("bad-function-pointer", "high", "jumped to 0x123456780"),
     "force-unwrap": ("swift-runtime-failure", "high", "Force unwrap of nil"),
@@ -53,6 +54,7 @@ EXPECTED = {
 EXPECTED_USER_FRAME = {
     "nil-pointer": "nilPointer()",
     "big-enum": "cardBody(_:_:_:depth:)",
+    "enum-copy": "makeRow(_:index:)",
     "actor-isolation": "closure #1 in ScoreViewModel.startRefreshing()",
     "nsexception": "nsException()",
     "force-unwrap": "forceUnwrap()",
@@ -126,6 +128,14 @@ class DemoScenarioTests(unittest.TestCase):
         out = lldb("big-enum", after_crash=["why"])
         self.assertIn("Frame 0 is ___chkstk_darwin", out)
         self.assertIn("from caller's prologue, matches x9", out)
+
+    def test_enum_copy_measures_the_type(self):
+        out = lldb("enum-copy", after_crash=["why"])
+        self.assertIn("asked for 15.0 KB", out)
+        self.assertIn("Size: ListItem.EndContent? is 7.5 KB (7697 bytes, measured on `template.end` in frame #2). "
+                      "Almost all of it is case .scoreboard", out)
+        self.assertIn("This is a Debug build", out)
+        self.assertIn("1. Box the payload of case .scoreboard", out)
 
     def test_auto_mode_is_quiet_at_breakpoints(self):
         out = lldb("index-out-of-range", before_run=["why auto on", "breakpoint set -n indexOutOfRange"],
