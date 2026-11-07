@@ -20,6 +20,7 @@ import lldb
 
 from .. import __version__
 from ..core import analyze_stack, diagnose, render_diagnosis, render_stack
+from ..core.anonymize import anonymize, leftovers
 from .gather import DEFAULT_MAX_FRAMES, gather
 
 ISSUES_URL = "https://github.com/lpbas/lldb-why/issues"
@@ -48,7 +49,8 @@ def _parser():
     p.add_argument("--json", action="store_true", help="print the diagnosis as JSON")
     p.add_argument("--expect", action="store_true", help="dump-context: wrap as a unit test fixture")
     p.add_argument("-o", "--output", help="dump-context: write to this file")
-    p.add_argument("--anonymize", action="store_true", help="dump-context: replace your home folder with ~")
+    p.add_argument("--anonymize", action="store_true",
+                   help="dump-context: rename your code's symbols, paths and messages so the dump can be shared")
     return p
 
 
@@ -66,7 +68,13 @@ def why_command(debugger, command, exe_ctx, result, internal_dict):
     except UserError as e:
         result.SetError(str(e))
     except Exception:
-        result.SetError("why: internal error, please report it at %s\n%s" % (ISSUES_URL, traceback.format_exc()))
+        result.SetError("why: internal error, please report it at %s\n%s" % (ISSUES_URL, _hide_home(traceback.format_exc())))
+
+
+def _hide_home(text):
+    """Tracebacks name files under the user's home folder (their username)."""
+    home = os.path.expanduser("~")
+    return text.replace(home, "~") if home and home != "/" else text
 
 
 class UserError(Exception):
@@ -118,6 +126,9 @@ def _thread(debugger, index):
 
 
 def _dump(ctx, args):
+    report = originals = None
+    if args.anonymize:
+        ctx, report, originals = anonymize(ctx, home=os.path.expanduser("~"))
     data = ctx.to_dict()
     if args.expect:
         d = diagnose(ctx)
@@ -131,14 +142,25 @@ def _dump(ctx, args):
             del data["expect"]["user_frame"]
     text = json.dumps(data, indent=1)
     if args.anonymize:
-        home = os.path.expanduser("~")
-        if home and home != "/":
-            text = text.replace(home, "~")
-    if args.output:
-        with open(os.path.expanduser(args.output), "w") as fh:
-            fh.write(text + "\n")
-        return "why: wrote %s" % args.output
-    return text
+        text = _hide_home(text)
+        # Check the app's data only: why's own words ("why", "Stack", ...) can
+        # match a name from the app without leaking anything.
+        left = leftovers(_hide_home(json.dumps(ctx.to_dict())), originals)
+        if left:
+            raise UserError("why: not writing the dump: %d name(s) from your code survived --anonymize. "
+                            "Please report this bug at %s (without the dump)." % (len(left), ISSUES_URL))
+    if not args.output:
+        return text
+    with open(os.path.expanduser(args.output), "w") as fh:
+        fh.write(text + "\n")
+    lines = ["why: wrote %s" % args.output]
+    if report is not None:
+        lines += ["  " + line for line in report.lines()]
+        lines.append("Read it before sharing: messages and names from Apple frameworks are kept.")
+    else:
+        lines.append("It contains symbol names, paths and messages from your app. "
+                     "Use --anonymize before sharing it.")
+    return "\n".join(lines)
 
 
 def use_color(debugger, requested=None):

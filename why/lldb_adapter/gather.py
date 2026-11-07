@@ -307,7 +307,9 @@ def _copied_value(thread, frames):
             frame = thread.GetFrameAtIndex(index)
             # Arguments first: locals may not be initialized yet.
             for arguments, locals_ in ((True, False), (False, True)):
-                values = frame.GetVariables(arguments, locals_, False, True)
+                # eDynamicDontRunTarget: resolve dynamic types without running code in
+                # the app, whatever the user's target.prefer-dynamic-value setting is.
+                values = frame.GetVariables(arguments, locals_, False, True, lldb.eDynamicDontRunTarget)
                 for k in range(values.GetSize()):
                     found = _find_value(values.GetValueAtIndex(k), names, depth=1)
                     if found is not None:

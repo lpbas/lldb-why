@@ -154,12 +154,18 @@ class DemoScenarioTests(unittest.TestCase):
     def test_dump_context_round_trip(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = os.path.join(tmp, "ctx.json")
-            lldb("nil-pointer", after_crash=["why dump-context --expect --anonymize -o %s" % path])
+            out = lldb("nil-pointer", after_crash=["why dump-context --expect --anonymize -o %s" % path])
+            self.assertIn("renamed", out)
             with open(path) as fh:
                 data = json.load(fh)
         self.assertEqual(data["expect"]["rule_id"], "nil-deref")
         self.assertEqual(diagnose(CrashContext.from_dict(data["context"])).rule_id, "nil-deref")
-        self.assertNotIn(os.path.expanduser("~") + "/", json.dumps(data))
+        text = json.dumps(data)
+        self.assertNotIn(os.path.expanduser("~") + "/", text)
+        # --anonymize renames the app's own names and paths, not just the home folder.
+        for name in ("why_demo", "why-demo", "nilPointer", "legacy_find_header", "lldb-why", ROOT):
+            self.assertNotIn(name, text)
+        self.assertIn("/redacted/", text)
 
 
 if __name__ == "__main__":

@@ -81,7 +81,7 @@ Xcode's lldb (3.9 and later).
 | `why` (alias `diagnose`) | Explains the current stop of the crashed thread: a one-line verdict with a confidence level, the evidence, the first frame in your code, and next steps. |
 | `why stack` | The full stack usage report: region, total used and %, frame 0's headroom, the largest frames, usage by function, and frames in your code vs SwiftUI vs system. Works at any stop, so you can profile deep view hierarchies at a breakpoint. `--top N` lists more frames. |
 | `why auto on` / `off` / `status` | Installs a stop hook that runs `why` when the process crashes. It stays quiet on breakpoints, steps and other stops. |
-| `why dump-context` | Prints the data `why` gathered as JSON. `--expect` wraps it as a unit-test fixture, `--anonymize` replaces your home folder with `~`, `-o file` writes to a file. |
+| `why dump-context` | Prints the data `why` gathered as JSON. `--expect` wraps it as a unit-test fixture, `--anonymize` renames everything from your code (see [Privacy](#privacy)), `-o file` writes to a file. |
 
 Options: `-t N` picks a thread, `--json` prints the diagnosis as JSON, and
 `--color` / `--no-color` override color. Output is plain text by default,
@@ -114,6 +114,30 @@ Rules are checked in order; the first match wins.
 Each verdict comes with next steps: which Xcode diagnostic to enable (Address
 Sanitizer, Zombie Objects, Malloc Scribble, Malloc Stack Logging, Thread
 Sanitizer, an Exception Breakpoint) or which lldb command to run next.
+
+## Privacy
+
+`why` only reads from the debugger: it doesn't run code in your app, change
+the process, make network requests or collect telemetry. Output is printed to
+your console, and the only file it writes is the one you name with
+`why dump-context -o`.
+
+That output does contain what the debugger sees: your app's symbol names,
+source paths, queue names and crash messages. Before sharing a dump, make it
+with `--anonymize`:
+
+* Names from your code become placeholders (`Module1`, `Type3`, `name2`),
+  consistently, including your types inside SwiftUI generics.
+* Paths to your code become `/redacted/...`, and your home folder becomes `~`.
+* Crash messages and exception reasons keep only the standard phrases `why`
+  recognizes (`Index out of range`, `unrecognized selector`), and app queue
+  and thread names are removed.
+* Apple framework names, addresses, sizes and registers are kept, so the dump
+  still produces the same diagnosis.
+
+`why` checks the result and refuses to write the file if any original name is
+still in it. Read it before sharing anyway. See [SECURITY.md](SECURITY.md) to
+report a problem privately.
 
 ## How it works
 

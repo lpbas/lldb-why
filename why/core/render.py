@@ -3,7 +3,7 @@
 import os
 
 from . import frames as F
-from .text import fmt_size
+from .text import clean, fmt_size
 
 _BOLD, _RED, _YELLOW, _GREEN, _DIM, _RESET = "\033[1m", "\033[31m", "\033[33m", "\033[32m", "\033[2m", "\033[0m"
 _CONFIDENCE_COLOR = {"high": _RED, "medium": _YELLOW, "low": _DIM}
@@ -29,6 +29,7 @@ class _Style:
 
 def render_diagnosis(d, color=False):
     s = _Style(color)
+    d = _cleaned(d)
     lines = [
         "%s %s  [confidence: %s]" % (s("why:", _BOLD), s(d.verdict, _BOLD),
                                      s(d.confidence, _CONFIDENCE_COLOR.get(d.confidence, ""))),
@@ -55,6 +56,16 @@ def _section(lines, s, title, items):
     lines.append("")
 
 
+def _cleaned(d):
+    """A copy of the diagnosis safe to print (see text.clean)."""
+    import copy
+    d = copy.copy(d)
+    d.verdict = clean(d.verdict)
+    d.evidence, d.where, d.notes, d.next_steps = ([clean(x) for x in items]
+                                                    for items in (d.evidence, d.where, d.notes, d.next_steps))
+    return d
+
+
 def stack_summary(r, top=3):
     """A few lines for the crash verdict; `why stack` prints the full report."""
     out = []
@@ -64,7 +75,7 @@ def stack_summary(r, top=3):
             name = fs.frame.name or "0x%x" % fs.frame.pc
             if name not in seen:
                 seen.add(name)
-                parts.append("%s %s" % (fmt_size(fs.size), name))
+                parts.append("%s %s" % (fmt_size(fs.size), clean(name)))
             if len(parts) == top:
                 break
         out.append("Largest frames: " + ", ".join(parts))
@@ -82,7 +93,7 @@ def stack_summary(r, top=3):
 
 def render_stack(r, color=False):
     s = _Style(color)
-    lines = [s("Stack usage for %s" % r.thread_label, _BOLD)]
+    lines = [s("Stack usage for %s" % clean(r.thread_label), _BOLD)]
     if r.region is not None:
         lines.append("  Region    0x%x-0x%x (%s)" % (r.region.base, r.region.end, fmt_size(r.region.size)))
     else:
@@ -102,7 +113,7 @@ def render_stack(r, color=False):
             lines.append("  Frame 0   sp has %s left before the stack's base" % fmt_size(r.sp0 - r.region.base))
     c = r.chkstk
     if c is not None:
-        caller = F.frame_label(c.caller) if c.caller else "the caller"
+        caller = clean(F.frame_label(c.caller)) if c.caller else "the caller"
         if c.requested:
             lines.append("  chkstk    %s requested %s (%d bytes; %s); %s was left" % (
                 caller, fmt_size(c.requested), c.requested, c.source, fmt_size(c.available)))
@@ -110,7 +121,7 @@ def render_stack(r, color=False):
             lines.append("  chkstk    %s requested more than the %s that was left" % (caller, fmt_size(c.available)))
     pattern = PATTERN_TEXT.get(r.pattern, r.pattern)
     if r.cycle_reps:
-        pattern += ": %s x%d (%s per repetition)" % (" -> ".join(r.cycle), r.cycle_reps, fmt_size(r.cycle_frame_size))
+        pattern += ": %s x%d (%s per repetition)" % (clean(" -> ".join(r.cycle)), r.cycle_reps, fmt_size(r.cycle_frame_size))
     lines.append("  Pattern   %s" % pattern)
 
     if r.largest:
@@ -121,17 +132,18 @@ def render_stack(r, color=False):
             f = fs.frame
             where = ""
             if f.file and not f.file.startswith("<"):
-                where = "  %s%s" % (os.path.basename(f.file), ":%d" % f.line if f.line else "")
+                where = "  %s%s" % (clean(os.path.basename(f.file)), ":%d" % f.line if f.line else "")
             elif f.module:
-                where = "  (%s)" % f.module
-            lines.append("    %s  #%-5d %s%s" % (fmt_size(fs.size).rjust(width), f.index, f.name or "0x%x" % f.pc, where))
+                where = "  (%s)" % clean(f.module)
+            lines.append("    %s  #%-5d %s%s" % (fmt_size(fs.size).rjust(width), f.index,
+                                                 clean(f.name) or "0x%x" % f.pc, where))
     if r.by_function:
         lines.append("")
         lines.append(s("  By function", _BOLD))
         width = max(len(fmt_size(t.size)) for t in r.by_function)
         for t in r.by_function:
             lines.append("    %s  %6d %s  %s" % (fmt_size(t.size).rjust(width), t.count,
-                                                "call " if t.count == 1 else "calls", t.name))
+                                                "call " if t.count == 1 else "calls", clean(t.name)))
     lines.append("")
     lines.append("  " + stack_summary(r)[-1])
     return "\n".join(lines) + "\n"

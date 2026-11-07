@@ -15,11 +15,29 @@ All notable changes to this project are documented here. The format follows
   from the debug info (`SBFunction.GetIsOptimized`).
 - `enum-copy` demo scenario: the stack overflows inside the outlined copy
   helper, like the real crash that motivated `why`.
+- A real, anonymized iOS fixture of the crash that motivated `why`, replacing
+  the modeled one.
+- SECURITY.md, an issue template that asks for anonymized dumps, and
+  Dependabot for the pinned GitHub Actions.
 
 ### Changed
 - When your own frames take most of the stack, the verdict says so:
   "8 of your frames take 828.9 KB of the 1008.0 KB stack (largest: ...)".
 - "Biggest consumer: X, 1 calls = ..." now reads "X, 322.8 KB in one call".
+
+### Security
+- `why dump-context --anonymize` now renames every symbol, path, module and
+  type from your code (including inside SwiftUI generics), drops crash
+  messages and exception reasons down to the standard phrases rules match,
+  removes app queue and thread names, and refuses to write the file if an
+  original name survives. Before, it only replaced the home folder.
+- Control characters and bidi overrides in text from the debugged app are
+  replaced before printing, so a crash message can't send escape sequences to
+  your terminal.
+- Variables are always read without running code in the app, whatever
+  `target.prefer-dynamic-value` is set to.
+- Internal error tracebacks show `~` instead of your home folder.
+- CI runs with read-only permissions and actions pinned to commit SHAs.
 
 ## [0.1.0]
 

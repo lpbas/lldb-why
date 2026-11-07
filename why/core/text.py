@@ -1,6 +1,8 @@
 """Plain-English names for exception types, codes and signals, and the catalog
 of next steps that rules can point to."""
 
+import re
+
 EXC_BAD_ACCESS = 1
 EXC_BAD_INSTRUCTION = 2
 EXC_ARITHMETIC = 3
@@ -124,3 +126,13 @@ class Steps:
 
 # Module names treated as SwiftUI for the stack summary.
 SWIFTUI_MODULES = frozenset(["SwiftUI", "SwiftUICore", "AttributeGraph"])
+
+
+_UNSAFE = re.compile("[\x00-\x08\x0b-\x1f\x7f-\x9f\u202a-\u202e\u2066-\u2069]")
+
+
+def clean(text):
+    """Text from the debugged app (symbol names, crash messages, exception
+    reasons) with control characters and bidi overrides replaced by "?", so it
+    can't send escape sequences to the user's terminal or disguise itself."""
+    return _UNSAFE.sub("?", text) if text else text

@@ -26,6 +26,9 @@ is a new crash signature with a fixture that proves it.
    (lldb) why dump-context --expect --anonymize -o tests/unit/fixtures/my_case.json
    ```
 
+   `--anonymize` renames everything from your code (`Module1`, `Type3`, ...)
+   and keeps addresses and sizes, so the diagnosis stays the same.
+
    Keep fixtures small: avoid deep recursion (tens of thousands of frames), or
    build the context in a unit test with the helpers in `tests/unit/builders.py`.
 
@@ -77,5 +80,11 @@ is a new crash signature with a fixture that proves it.
 ## Reporting a wrong verdict
 
 Open an issue with the output of `why` and, if you can, the file from
-`why dump-context --anonymize -o case.json`. Check it first: it contains
-symbol names and file paths from your app.
+`why dump-context --expect --anonymize -o case.json`. `--anonymize` renames
+your code's symbols, paths and messages (see [Privacy](README.md#privacy));
+read the file before posting anyway, and replace names you can't share in the
+`why` output too.
+
+Fixtures committed to `tests/unit/fixtures` must be anonymized or come from
+the demo app. Security problems go through [SECURITY.md](SECURITY.md), not
+public issues.
