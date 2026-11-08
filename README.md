@@ -74,11 +74,18 @@ why auto on
 No dependencies: `why` is pure Python and runs on the Python that ships with
 Xcode's lldb (3.9 and later).
 
+`why` never takes a command name another extension already registered. If
+one loaded earlier owns `why` ([ChatDBG](https://github.com/plasma-umass/chatdbg)
+does), this one is added as `diagnose` only, says so when lldb starts, and
+uses that name in its hints; write `diagnose auto on` in `~/.lldbinit` then.
+If `why` loads first, the other extension's `why` fails to register, so put
+that extension's line above this one to keep both.
+
 ## Commands
 
 | Command | What it does |
 |---|---|
-| `why` (alias `diagnose`) | Explains the current stop of the crashed thread: a one-line verdict with a confidence level, the evidence, the first frame in your code, and next steps. |
+| `why` (also `diagnose`) | Explains the current stop of the crashed thread: a one-line verdict with a confidence level, the evidence, the first frame in your code, and next steps. |
 | `why stack` | The full stack usage report: region, total used and %, frame 0's headroom, the largest frames, usage by function, and frames in your code vs SwiftUI vs system. Works at any stop, so you can profile deep view hierarchies at a breakpoint. `--top N` lists more frames. |
 | `why auto on` / `off` / `status` | Installs a stop hook that runs `why` when the process crashes. It stays quiet on breakpoints, steps and other stops. |
 | `why dump-context` | Prints the data `why` gathered as JSON. `--expect` wraps it as a unit-test fixture, `--anonymize` renames everything from your code (see [Privacy](#privacy)), `-o file` writes to a file. |
@@ -155,6 +162,24 @@ Two layers:
 each situation. Several details are not what you'd guess: for example, the
 chkstk frame size is passed in x9 in bytes, and Swift traps in debug builds
 don't arrive as `EXC_BREAKPOINT`.
+
+## Related tools
+
+* [ChatDBG](https://github.com/plasma-umass/chatdbg) also adds a `why`
+  command to lldb (and gdb and pdb). It hands the debugger to an LLM, which
+  needs an API key and sends your program's state and source to the model's
+  provider.
+  `why` uses no AI: its rules run locally, give the same answer every time,
+  and are tested against fixtures. Both can be installed together (see
+  [Install](#install)).
+* WinDbg's [`!analyze -v`](https://learn.microsoft.com/windows-hardware/drivers/debugger/using-the--analyze-extension)
+  does automatic crash analysis on Windows, and CERT's GDB
+  [`exploitable`](https://github.com/CERTCC/exploitable) plugin ranks Linux
+  crashes by how exploitable they are, using an ordered rule table much like
+  `why`'s.
+* LLDB MCP servers let an AI coding agent drive lldb. Services like Sentry
+  and Crashlytics group and explain crashes from released apps, on their
+  servers.
 
 ## Adding a rule
 

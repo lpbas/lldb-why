@@ -19,11 +19,18 @@ All notable changes to this project are documented here. The format follows
   the modeled one.
 - SECURITY.md, an issue template that asks for anonymized dumps, and
   Dependabot for the pinned GitHub Actions.
+- A Related tools section in the README.
 
 ### Changed
 - When your own frames take most of the stack, the verdict says so:
   "8 of your frames take 828.9 KB of the 1008.0 KB stack (largest: ...)".
 - "Biggest consumer: X, 1 calls = ..." now reads "X, 322.8 KB in one call".
+- `why` no longer replaces a `why` command registered by another extension
+  (such as ChatDBG). It registers as `diagnose` only, says so when lldb starts,
+  and uses that name in its hints. `diagnose` is now a command of its own
+  instead of an alias, so it keeps working whoever owns `why`.
+- Bad arguments print one error line and the usage instead of argparse's
+  output.
 
 ### Security
 - `why dump-context --anonymize` now renames every symbol, path, module and

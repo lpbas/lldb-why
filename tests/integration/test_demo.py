@@ -21,6 +21,7 @@ import unittest
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, ROOT)
 
+from why import __version__  # noqa: E402
 from why.core import CrashContext, diagnose  # noqa: E402
 
 PACKAGE = os.path.join(ROOT, "why")
@@ -74,8 +75,11 @@ def demo_binary():
     return _demo
 
 
-def lldb(scenario, before_run=(), after_crash=(), after_run=()):
-    cmd = [LLDB, "-x", "--batch", "-o", "command script import %s" % PACKAGE]
+def lldb(scenario, before_run=(), after_crash=(), after_run=(), imports_first=()):
+    cmd = [LLDB, "-x", "--batch"]
+    for path in imports_first:
+        cmd += ["-o", "command script import %s" % path]
+    cmd += ["-o", "command script import %s" % PACKAGE]
     for c in before_run:
         cmd += ["-o", c]
     cmd += ["-o", "run"]
@@ -101,6 +105,55 @@ def json_after(output, command):
     return json.loads("\n".join(body))
 
 
+# Another extension that registers `why` the way ChatDBG does.
+OTHER_WHY = """import lldb
+
+@lldb.command("why")
+def other_why(debugger, command, result, internal_dict):
+    result.AppendMessage("OTHER WHY")
+"""
+
+
+def lldb_no_target(*commands):
+    cmd = [LLDB, "-x", "--batch"]
+    for c in commands:
+        cmd += ["-o", c]
+    return subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True,
+                          timeout=TIMEOUT).stdout
+
+
+@unittest.skipUnless(sys.platform == "darwin" and LLDB, "needs macOS and lldb")
+class NameClashTests(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.other = os.path.join(tmp.name, "other_why.py")
+        with open(self.other, "w") as fh:
+            fh.write(OTHER_WHY)
+
+    def test_other_extension_keeps_why(self):
+        out = lldb_no_target("command script import %s" % self.other, "command script import %s" % PACKAGE,
+                             "why", "diagnose version", "diagnose help")
+        self.assertIn("run `diagnose` after a crash", out)
+        self.assertIn("already owns `why`, so this one is `diagnose`", out)
+        self.assertIn("OTHER WHY", out)
+        self.assertIn("\nwhy %s\n" % __version__, out)
+        self.assertIn("    diagnose stack ", out)
+        self.assertNotIn("    why stack", out)
+
+    def test_reimport_keeps_both_names(self):
+        out = lldb_no_target("command script import %s" % PACKAGE, "command script import %s" % PACKAGE,
+                             "help why", "diagnose version")
+        self.assertNotIn("diagnose` after a crash", out)
+        self.assertIn("(lldb-why)", out)
+        self.assertNotIn("error:", out)
+
+    def test_bad_arguments_are_one_error(self):
+        out = lldb_no_target("command script import %s" % PACKAGE, "why bogus")
+        self.assertIn("error: why: argument action: invalid choice: 'bogus'", out)
+        self.assertNotIn("[--max-frames MAX_FRAMES]", out)   # no argparse usage dump
+
+
 @unittest.skipUnless(sys.platform == "darwin" and LLDB and shutil.which("swift"), "needs macOS, lldb and swift")
 class DemoScenarioTests(unittest.TestCase):
     def test_scenarios(self):
@@ -118,11 +171,21 @@ class DemoScenarioTests(unittest.TestCase):
                     self.assertEqual(d["user_frame"]["display"], EXPECTED_USER_FRAME[scenario])
                 self.assertTrue(d["next_steps"])
 
-    def test_plain_text_and_alias(self):
+    def test_plain_text_and_diagnose(self):
         out = lldb("force-unwrap", after_crash=["diagnose"])
         self.assertIn("why: Swift runtime trap: Force unwrap of nil", out)
         self.assertIn("\nNext steps\n", out)
         self.assertNotIn("\033[", out)
+
+    def test_hints_use_diagnose_when_why_is_taken(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            other = os.path.join(tmp, "other_why.py")
+            with open(other, "w") as fh:
+                fh.write(OTHER_WHY)
+            out = lldb("recursion", before_run=["diagnose auto on"], imports_first=[other])
+        self.assertIn("why: Stack overflow", out)          # the auto hook still runs
+        self.assertIn("`diagnose stack`", out)
+        self.assertNotIn("`why stack`", out)
 
     def test_big_enum_chkstk_evidence(self):
         out = lldb("big-enum", after_crash=["why"])

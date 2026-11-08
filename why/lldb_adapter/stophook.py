@@ -39,10 +39,10 @@ class AutoHook:
             thread = exe_ctx.GetThread()
             if not thread.IsValid() or not is_crash_stop(thread):
                 return True
-            from .commands import use_color
+            from .commands import renamed, use_color
             debugger = self.target.GetDebugger()
             text = render_diagnosis(diagnose(gather(debugger, thread=thread)), color=use_color(debugger))
-            stream.Print("\n" + text)
+            stream.Print("\n" + renamed(text))
         except Exception as e:   # never break the user's debugging session
             stream.Print("why: auto analysis failed: %s\n" % e)
         return True   # keep the process stopped

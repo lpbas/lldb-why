@@ -6,12 +6,14 @@
     why auto status
     why dump-context     print the gathered data as JSON (add --expect for a test fixture)
 
-`diagnose` is an alias for `why`.
+`diagnose` is the same command under another name. When another lldb
+extension (ChatDBG, for one) already uses the name why, only `diagnose` is added.
 """
 
 import argparse
 import json
 import os
+import re
 import shlex
 import sys
 import traceback
@@ -25,19 +27,84 @@ from .gather import DEFAULT_MAX_FRAMES, gather
 
 ISSUES_URL = "https://github.com/lpbas/lldb-why/issues"
 _PACKAGE = "why"
+NAMES = ("why", "diagnose")
+# In `help why`, so a later import can tell our command from another extension's.
+# No backticks or double quotes: lldb would evaluate or split on them.
+MARKER = "(lldb-why)"
+HELP = ("Explain the crash in plain English %s. "
+        "Subcommands: stack, auto on|off|status, dump-context, help, version." % MARKER)
+_name = "why"   # the name the user types, used in hints and usage lines
 
 
 def register(debugger, package_name):
-    global _PACKAGE
+    global _PACKAGE, _name
     _PACKAGE = package_name
-    debugger.HandleCommand("command script add -o -f %s.lldb_adapter.commands.why_command why" % package_name)
-    debugger.HandleCommand("command alias diagnose why")
-    # Printed once per lldb session, when ~/.lldbinit imports us.
-    print("why %s loaded: run `why` after a crash, `why help` for more" % __version__)
+    ci = debugger.GetCommandInterpreter()
+    added, taken = [], []
+    for name in NAMES:
+        if owner(ci, name) == "other":
+            taken.append(name)
+            continue
+        ci.HandleCommand('command script add -o -h "%s" -f %s.lldb_adapter.commands.why_command %s'
+                         % (HELP, package_name, name), lldb.SBCommandReturnObject())
+        added.append(name)
+    print(load_message(added, taken))
+    if added:
+        _name = added[0]
+
+
+def owner(ci, name):
+    """'free', 'ours' or 'other' for an lldb command name."""
+    if not (ci.CommandExists(name) or ci.UserCommandExists(name) or ci.AliasExists(name)):
+        return "free"
+    result = lldb.SBCommandReturnObject()
+    ci.HandleCommand("help %s" % name, result)
+    return "ours" if MARKER in (result.GetOutput() or "") else "other"
+
+
+def load_message(added, taken):
+    """Printed once per lldb session, when ~/.lldbinit imports us."""
+    if not added:
+        return ("why %s not loaded: `why` and `diagnose` both belong to other lldb extensions"
+                % __version__)
+    name = added[0]
+    text = "why %s loaded: run `%s` after a crash, `%s help` for more" % (__version__, name, name)
+    if "why" in taken:
+        text += ("\nwhy: another lldb extension (ChatDBG, for one) already owns `why`, "
+                 "so this one is `diagnose`")
+    return text
+
+
+def renamed(text):
+    """why's hints say `why stack`, `why help`...; use the name the user has."""
+    if _name == "why" or not text:
+        return text
+    return _WHY.sub(lambda m: m.group(1) + _name, text)
+
+
+# `why stack`, "usage: why ...", and the indented lines of `why help`;
+# not "why 0.1.0" or "why: ...", where why is the tool's name.
+_WHY = re.compile(r"(`|\busage: |^[ \t]+)why(?=[ `]|$)", re.M)
+_HELP_ROW = re.compile(r"^(    \S.*?) {2,}(\S.*)$")
+
+
+def _help_text():
+    """The module docstring with the user's command name, columns kept aligned."""
+    column = max(len(m.group(1)) for m in map(_HELP_ROW.match, renamed(__doc__).splitlines()) if m) + 2
+    lines = []
+    for line in renamed(__doc__.strip()).splitlines():
+        m = _HELP_ROW.match(line)
+        lines.append(m.group(1).ljust(column) + m.group(2) if m else line)
+    return "\n".join(lines)
+
+
+class _Parser(argparse.ArgumentParser):
+    def error(self, message):   # argparse would print to stderr and exit
+        raise UserError("why: %s" % message)
 
 
 def _parser():
-    p = argparse.ArgumentParser(prog="why", add_help=False)
+    p = _Parser(prog="why", add_help=False)
     p.add_argument("action", nargs="?", default="crash",
                    choices=["crash", "stack", "auto", "dump-context", "help", "version"])
     p.add_argument("value", nargs="?")
@@ -57,13 +124,14 @@ def _parser():
 def why_command(debugger, command, exe_ctx, result, internal_dict):
     try:
         args = _parser().parse_args(shlex.split(command))
-    except SystemExit:
-        result.SetError("usage: why [stack|auto on|off|status|dump-context|help] [-t N] [--color|--no-color]")
+    except UserError as e:
+        result.SetError(renamed("%s\nusage: why [stack|auto on|off|status|dump-context|help] [-t N] "
+                                "[--color|--no-color]" % e))
         return
     try:
         text = _dispatch(debugger, args)
         if text:
-            result.AppendMessage(text.rstrip("\n"))
+            result.AppendMessage(renamed(text.rstrip("\n")))
         result.SetStatus(lldb.eReturnStatusSuccessFinishResult)
     except UserError as e:
         result.SetError(str(e))
@@ -83,7 +151,7 @@ class UserError(Exception):
 
 def _dispatch(debugger, args):
     if args.action == "help":
-        return __doc__.strip()
+        return _help_text()
     if args.action == "version":
         return "why %s" % __version__
     if args.action == "auto":
