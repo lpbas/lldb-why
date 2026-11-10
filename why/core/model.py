@@ -166,7 +166,8 @@ class LayoutPart(_Serializable):
     name: str = ""
     type: str = ""
     size: int = 0
-    is_case: bool = False   # an enum case (the one the value currently holds)
+    is_case: bool = False   # an enum case
+    held: bool = True       # False: the enum's biggest case, from its metadata; the value holds another
 
 
 @dataclass

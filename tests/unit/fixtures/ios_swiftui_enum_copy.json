@@ -9,7 +9,6 @@
   "user_frame": "ListRow.init(label:leading:trailing:action:)",
   "output_contains": [
    "asked for 24.4 KB (24960 bytes, from caller's prologue, matches x9) but only 21.1 KB was left",
-   "Biggest consumer: _ListSection.body.getter, 322.8 KB in one call",
    "Via compiler-generated #1 outlined init with copy of ListRow.Trailing?",
    "This is a Debug build",
    "MemoryLayout<ListRow.Trailing?>.size",

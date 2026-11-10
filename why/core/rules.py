@@ -125,6 +125,8 @@ def _overflow_pattern(f, v):
     if s.pattern in ("infinite-recursion", "recursion"):
         return "%s repeats %d times, %s per repetition" % (" -> ".join(s.cycle), s.cycle_reps, fmt_size(s.cycle_frame_size))
     top = _top_function(s)
+    if top and s.pattern == "large-frames":
+        return None   # the verdict already names it
     if top:
         if top.count > 1:
             return "Biggest consumer: %s, %d calls = %s (%s per call)" % (
@@ -154,7 +156,11 @@ def _overflow_value(f, v):
         return None
     text = "Size: %s is %s (%d bytes, measured on `%s` in frame #%d)" % (
         F.short_type(lay.type), fmt_size(lay.size), lay.size, lay.variable, lay.frame_index)
-    if lay.parts:
+    if lay.parts and not lay.parts[0].held:
+        case = lay.parts[0]
+        text += (". Almost all of it is case .%s, whose payload holds %s (%s), though this value holds a "
+                 "smaller case or nil" % (case.name, F.short_type(case.type), fmt_size(case.size)))
+    elif lay.parts:
         last = lay.parts[-1]
         where = "case .%s" % lay.parts[0].name if lay.parts[0].is_case else "`%s`" % _part_path(lay)
         text += ". Almost all of it is %s" % where
@@ -363,6 +369,16 @@ SWIFT_MESSAGES = [
      "An Objective-C superclass called an initializer your Swift subclass doesn't implement",
      "Override that initializer, or stop calling it"),
 ]
+
+
+def _swift_message_evidence(f, v):
+    message = _swift_message(f)
+    if not message:
+        return None
+    stop = f.stop
+    if message in (stop.instrumentation_message or "") or message in (stop.description or ""):
+        return None   # the stop line ("Stopped by lldb's ...", "Stop reason: ...") already quotes it
+    return "Runtime message: \"%s\"" % message
 
 
 def _swift_message(f):
@@ -719,7 +735,7 @@ RULES = [
         when=_is_swift_failure,
         verdict=_swift_verdict,
         confidence="high",
-        evidence=[lambda f, v: "Runtime message: \"%s\"" % _swift_message(f) if _swift_message(f) else None],
+        evidence=[_swift_message_evidence],
         notes=[_swift_note],
         next_steps=[_inspect_step, Steps.BT],
     ),

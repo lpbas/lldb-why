@@ -35,7 +35,6 @@ Evidence
   - Stack: 1.01 MB used of 1.03 MB (98.0%) across 41 frames on thread #2
   - Frame 0 is ___chkstk_darwin, the stack probe for big frames: #1 outlined init with copy of ListItem.EndContent? at <compiler-generated> (why-demo) asked for 15.0 KB (15312 bytes, from caller's prologue, matches x9) but only 928 B was left
   - Size: ListItem.EndContent? is 7.5 KB (7697 bytes, measured on `template.end` in frame #2). Almost all of it is case .scoreboard: `.scoreboard.0` is ListItem.Scoreboard, 7.5 KB
-  - Biggest consumer: screenBody(_:level:), 31 calls = 944.5 KB (30.5 KB per call)
 
 Where
   - Your code: #2 makeRow(_:index:) at main.swift:103 (why-demo)

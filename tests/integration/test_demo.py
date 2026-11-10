@@ -36,6 +36,8 @@ EXPECTED = {
     "recursion-main": ("stack-overflow", "high", "infinite recursion in countDown(_:)"),
     "big-enum": ("stack-overflow", "high", "44 of your frames take"),
     "enum-copy": ("stack-overflow", "high", "of your frames take"),
+    "enum-copy-small": ("stack-overflow", "high", "of your frames take"),
+    "enum-copy-nil": ("stack-overflow", "high", "of your frames take"),
     "use-after-free": ("refcount-runtime", "high", "Use-after-free or over-release"),
     "bad-function-pointer": ("bad-function-pointer", "high", "jumped to 0x123456780"),
     "force-unwrap": ("swift-runtime-failure", "high", "Force unwrap of nil"),
@@ -56,6 +58,8 @@ EXPECTED_USER_FRAME = {
     "nil-pointer": "nilPointer()",
     "big-enum": "cardBody(_:_:_:depth:)",
     "enum-copy": "makeRow(_:index:)",
+    "enum-copy-small": "makeRow(_:index:)",
+    "enum-copy-nil": "makeRow(_:index:)",
     "actor-isolation": "closure #1 in ScoreViewModel.startRefreshing()",
     "nsexception": "nsException()",
     "force-unwrap": "forceUnwrap()",
@@ -199,6 +203,20 @@ class DemoScenarioTests(unittest.TestCase):
                       "Almost all of it is case .scoreboard", out)
         self.assertIn("This is a Debug build", out)
         self.assertIn("1. Box the payload of case .scoreboard", out)
+
+    def test_enum_copy_finds_the_biggest_case_from_metadata(self):
+        # The value holds .badge or nil, so the biggest case comes from the enum's reflection metadata.
+        for scenario in ("enum-copy-small", "enum-copy-nil"):
+            with self.subTest(scenario=scenario):
+                out = lldb(scenario, after_crash=["why"])
+                self.assertIn("Size: ListItem.EndContent? is 7.5 KB (7697 bytes, measured on `template.end` in "
+                              "frame #2). Almost all of it is case .scoreboard, whose payload holds "
+                              "ListItem.Scoreboard (7.5 KB), though this value holds a smaller case or nil", out)
+                self.assertIn("1. Box the payload of case .scoreboard: write `indirect case scoreboard(...)`, "
+                              "or keep ListItem.Scoreboard in a final class", out)
+                # lldb prints this when it tries to run its Objective-C helper code in the app
+                # (SBTarget.FindTypes does): why must never make it run code.
+                self.assertNotIn("could not execute support code", out)
 
     def test_auto_mode_is_quiet_at_breakpoints(self):
         out = lldb("index-out-of-range", before_run=["why auto on", "breakpoint set -n indexOutOfRange"],

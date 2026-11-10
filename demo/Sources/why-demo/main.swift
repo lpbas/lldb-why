@@ -19,7 +19,11 @@ let scenarios: [(name: String, summary: String, run: () -> Void)] = [
     ("big-enum", "deep view-like chain copying a 7.6 KB enum by value, on a 1 MB stack (iOS main thread)",
      { onThread(stackSize: 1 << 20, bigEnum) }),
     ("enum-copy", "a few huge view-like frames, then copying the 7.6 KB enum overflows inside the outlined copy helper",
-     { onThread(stackSize: 1 << 20, enumCopy) }),
+     { onThread(stackSize: 1 << 20) { enumCopy(end: .scoreboard(.init(), title: "Live")) } }),
+    ("enum-copy-small", "same, but the row holds a small case: the copy still reserves the biggest case's size",
+     { onThread(stackSize: 1 << 20) { enumCopy(end: .badge("New")) } }),
+    ("enum-copy-nil", "same, with no trailing content at all",
+     { onThread(stackSize: 1 << 20) { enumCopy(end: nil) } }),
     ("use-after-free", "over-release through Unmanaged", useAfterFree),
     ("bad-function-pointer", "calls a C function pointer made from a bad integer", badFunctionPointer),
     ("force-unwrap", "force unwrap of a nil Optional", forceUnwrap),
@@ -119,8 +123,8 @@ func bigEnum() {
 /// little for the outlined copy helper (~15 KB) it calls.
 let enumCopyHeadroom = 24 << 10
 
-func enumCopy() {
-    let template = ListItem(title: "Match", end: .scoreboard(.init(), title: "Live"))
+func enumCopy(end: ListItem.EndContent?) {
+    let template = ListItem(title: "Match", end: end)
     print(screenBody(template, level: 0))
 }
 

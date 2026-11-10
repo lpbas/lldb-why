@@ -139,6 +139,22 @@ class StackOverflowTests(unittest.TestCase):
         self.assertTrue(d.next_steps[0].startswith("Box the payload of case .stats: write `indirect case stats(...)`, "
                                                    "or keep MatchStats in a final class"))
         self.assertIn("should drop well below 7673", d.next_steps[0])
+        # The verdict already names the biggest frame.
+        self.assertFalse(any(e.startswith("Biggest consumer") for e in d.evidence))
+
+    def test_biggest_case_from_metadata(self):
+        # The variable held nil or a small case; gather read the biggest case from the enum's metadata.
+        value = ValueLayout(type="Swift.Optional<DesignKit.ListRow.Trailing>", size=7673, variable="trailing",
+                            frame_index=2, parts=[LayoutPart(name="stats", type="DesignKit.MatchStats", size=7656,
+                                                             is_case=True, held=False)])
+        d = self._real_ios_case(copied_value=value)
+        self.assertIn("Size: ListRow.Trailing? is 7.5 KB (7673 bytes, measured on `trailing` in frame #2). "
+                      "Almost all of it is case .stats, whose payload holds MatchStats (7.5 KB), though this value "
+                      "holds a smaller case or nil", d.evidence)
+        self.assertTrue(d.next_steps[0].startswith("Box the payload of case .stats: write `indirect case stats(...)`, "
+                                                   "or keep MatchStats in a final class"))
+        restored = ValueLayout.from_dict(value.to_dict())
+        self.assertFalse(restored.parts[0].held)
 
     def test_optimized_build_has_no_debug_note(self):
         self.assertTrue(any(n.startswith("This is a Debug build") for n in self._real_ios_case().notes))
@@ -188,6 +204,8 @@ class TrapTests(unittest.TestCase):
         self.assertEqual(d.rule_id, "swift-runtime-failure")
         self.assertIn("Force unwrap of nil", d.verdict)
         self.assertEqual(d.user_frame.name, "main")
+        # The message is quoted once, in the "Stopped by lldb's ..." line.
+        self.assertEqual(sum("Unexpectedly found nil" in e for e in d.evidence), 1)
 
     def test_index_out_of_range_optimized_build(self):
         frames = stack(("Swift runtime failure: Index out of range", "demo", {"inlined": True}),
@@ -197,6 +215,7 @@ class TrapTests(unittest.TestCase):
         d = diagnose(trap(frames, "Swift runtime failure: Index out of range"))
         self.assertEqual(d.rule_id, "swift-runtime-failure")
         self.assertIn("Index out of range", d.verdict)
+        self.assertFalse(any(e.startswith("Runtime message") for e in d.evidence))   # the stop reason has it
         # "specialized ..." stdlib code inlined into the user binary still counts as the user's binary
         self.assertNotIn("Swift runtime failure", d.user_frame.name)
 

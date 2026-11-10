@@ -11,6 +11,10 @@ All notable changes to this project are documented here. The format follows
   real size, measured on a variable of that type in the frames above, and the
   enum case or stored property that makes it big. The next step names the
   case to box. No code runs in the crashed process.
+- When the copied enum holds a small case or nil, `why` still names the case
+  that makes it big, read from the enum's reflection metadata in the binary
+  (`__swift5_fieldmd`). `enum-copy-small` and `enum-copy-nil` demo scenarios
+  cover it.
 - A note when the large frames come from a Debug (unoptimized) build, read
   from the debug info (`SBFunction.GetIsOptimized`).
 - `enum-copy` demo scenario: the stack overflows inside the outlined copy
@@ -24,7 +28,9 @@ All notable changes to this project are documented here. The format follows
 ### Changed
 - When your own frames take most of the stack, the verdict says so:
   "8 of your frames take 828.9 KB of the 1008.0 KB stack (largest: ...)".
-- "Biggest consumer: X, 1 calls = ..." now reads "X, 322.8 KB in one call".
+- "Biggest consumer: X, 1 calls = ..." now reads "X, 322.8 KB in one call", and
+  is left out when the verdict already names that function.
+- Swift runtime traps quote the runtime message once instead of twice.
 - `why` no longer replaces a `why` command registered by another extension
   (such as ChatDBG). It registers as `diagnose` only, says so when lldb starts,
   and uses that name in its hints. `diagnose` is now a command of its own

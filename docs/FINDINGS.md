@@ -116,6 +116,20 @@ helper is (Xcode 26 lldb, Swift 6, debug build):
   the case it currently holds, named after the case, with the payload as its
   type (a tuple for several associated values, elements named `0`, `title`,
   ...). An `Optional` of an enum is flattened: its child is the inner case.
+* That child is the only case lldb shows. When the value holds a small case or
+  nil (the copy still reserves the biggest case's size), the SB API has no way
+  to list the others: the enum's `SBType` has no fields, no enum members and
+  size 0, and `type lookup` finds nothing. The cases are in the binary's
+  reflection metadata, `__TEXT.__swift5_fieldmd`: one record per case with its
+  name and the payload's mangled type name, whose symbolic references point at
+  the payload types' context descriptors. `why` reads those from the file
+  (verified on Xcode 26's lldb, `enum-copy-small` and `enum-copy-nil`).
+* A payload type's size: `SBModule.FindTypes("Scoreboard")` finds it (the
+  qualified name doesn't), and `value.Cast(thatType).GetByteSize()` returns
+  its real size (7680), reading metadata only.
+* `SBTarget.FindTypes` is not safe here: it also asks the Objective-C runtime,
+  which runs lldb's helper code in the process ("warning: could not execute
+  support code to read Objective-C class data"). Search per module instead.
 * `SBFunction.GetIsOptimized()` is False for `-Onone` code. The outlined
   helpers have no `SBFunction` (symbol only).
 * `bt` hides the compiler-generated helper frame (it prints frames #0, #2, #3,

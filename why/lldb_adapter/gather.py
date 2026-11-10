@@ -352,4 +352,68 @@ def _layout(value, variable, frame_index):
             name=biggest.GetName() or "", type=biggest.GetTypeName() or "", size=size,
             is_case=current.GetType().GetTypeClass() == lldb.eTypeClassUnion))
         current = biggest
+    if not any(part.is_case for part in layout.parts) and value.GetType().GetTypeClass() == lldb.eTypeClassUnion:
+        try:
+            case = _largest_case(value)
+        except Exception:   # an optional extra: unknown metadata layouts must not break the diagnosis
+            case = None
+        if case is not None and case.size * 2 >= layout.size:
+            layout.parts = [case]
     return layout
+
+
+def _largest_case(value):
+    """The enum's biggest case when the value holds a small one (or nil): the
+    case names and payload types come from the binary's reflection metadata,
+    and each payload type is sized by viewing the value as that type, which
+    reads metadata only."""
+    from .swift_meta import enum_cases
+    name = value.GetTypeName() or ""
+    m = re.match(r"^Swift\.Optional<(.*)>$", name)
+    if m:
+        name = m.group(1)
+    if "<" in name or "." not in name:
+        return None   # generic enums: payload types depend on the arguments
+    target = value.GetTarget()
+    modules = list(_modules_to_search(value))
+    best = None
+    for module in modules:
+        cases = enum_cases(target, module, name)
+        if cases is None:
+            continue
+        for case in cases:
+            if case.indirect:
+                continue
+            for type_name in case.payload_types:
+                size = _size_of([module] + modules, value, type_name)
+                if size and (best is None or size > best.size):
+                    best = LayoutPart(name=case.name, type=type_name, size=size, is_case=True, held=False)
+        break
+    return best
+
+
+def _modules_to_search(value):
+    """The image whose code copies the value first, then the app's other images."""
+    target = value.GetTarget()
+    first = value.GetFrame().GetModule()
+    yield first
+    first_path = first.GetFileSpec().fullpath
+    for i in range(target.GetNumModules()):
+        module = target.GetModuleAtIndex(i)
+        path = module.GetFileSpec().fullpath or ""
+        if path != first_path and not path.startswith(("/System/", "/usr/")) and "/Symbols/" not in path:
+            yield module
+
+
+def _size_of(modules, value, type_name):
+    """type_name's size, by viewing value as that type. Types are looked up per
+    module: SBTarget.FindTypes also asks the Objective-C runtime, which runs
+    code in the process."""
+    simple = type_name.rsplit(".", 1)[-1]
+    for module in modules:
+        types = module.FindTypes(simple)
+        for i in range(types.GetSize()):
+            candidate = types.GetTypeAtIndex(i)
+            if candidate.GetName() == type_name:
+                return value.Cast(candidate).GetByteSize() or None
+    return None
